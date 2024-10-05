@@ -7,6 +7,14 @@
 #include "cpu.h"
 #include "../mmu/mmu.h"
 
+static uint8_t getNextOperand() {
+	// get next operand 
+	// TODO: Increment PC?
+	regs.pc += 1;
+	printf("Next requested operand is: 0x%.2X \n", *getByte(regs.pc));
+	return *getByte(regs.pc);
+}
+
 int decode(uint8_t opcode) {
 		
 	if (opcode == 0xCB) { // check leading bits
@@ -26,7 +34,7 @@ int decode(uint8_t opcode) {
 					case 0x6: printf("Sub-case 0x06\n"); break;
 					case 0x7: printf("Sub-case 0x07\n"); break;
 					case 0x8: printf("Sub-case 0x08\n"); break;
-					case 0x9: printf("Sub-case 0x09\n"); break;
+					case 0x9: ADD_HL(BC_REG); break;
 					case 0xA: printf("Sub-case 0x0A\n"); break;
 					case 0xB: printf("Sub-case 0x0B\n"); break;
 					case 0xC: INC(&regs.c); break;
@@ -47,7 +55,7 @@ int decode(uint8_t opcode) {
 					case 0x6: printf("Sub-case 0x06\n"); break;
 					case 0x7: printf("Sub-case 0x07\n"); break;
 					case 0x8: printf("Sub-case 0x08\n"); break;
-					case 0x9: printf("Sub-case 0x09\n"); break;
+					case 0x9: ADD_HL(DE_REG); break;
 					case 0xA: printf("Sub-case 0x0A\n"); break;
 					case 0xB: printf("Sub-case 0x0B\n"); break;
 					case 0xC: INC(&regs.e); break;
@@ -68,7 +76,7 @@ int decode(uint8_t opcode) {
 					case 0x6: printf("Sub-case 0x06\n"); break;
 					case 0x7: printf("Sub-case 0x07\n"); break;
 					case 0x8: printf("Sub-case 0x08\n"); break;
-					case 0x9: printf("Sub-case 0x09\n"); break;
+					case 0x9: ADD_HL(HL_REG); break;
 					case 0xA: printf("Sub-case 0x0A\n"); break;
 					case 0xB: printf("Sub-case 0x0B\n"); break;
 					case 0xC: INC(&regs.l); break;
@@ -89,7 +97,7 @@ int decode(uint8_t opcode) {
 					case 0x6: printf("Sub-case 0x06\n"); break;
 					case 0x7: printf("Sub-case 0x07\n"); break;
 					case 0x8: printf("Sub-case 0x08\n"); break;
-					case 0x9: printf("Sub-case 0x09\n"); break;
+					case 0x9: ADD_HL(regs.sp); break;
 					case 0xA: printf("Sub-case 0x0A\n"); break;
 					case 0xB: printf("Sub-case 0x0B\n"); break;
 					case 0xC: INC(&regs.a); break;
@@ -220,7 +228,7 @@ int decode(uint8_t opcode) {
 					case 0xB: SBC(&regs.e); break;
 					case 0xC: SBC(&regs.h); break;
 					case 0xD: SBC(&regs.l); break;
-					case 0xE: SBC(&regs.getByte(HL_REG)); break;
+					case 0xE: SBC(getByte(HL_REG)); break;
 					case 0xF: SBC(&regs.a); break;
 				}
 				break;
@@ -262,7 +270,7 @@ int decode(uint8_t opcode) {
 					case 0xB: CP(&regs.e); break;
 					case 0xC: CP(&regs.h); break;
 					case 0xD: CP(&regs.l); break;
-					case 0xE: CP(&regs.getByte(HL_REG)); break;
+					case 0xE: CP(getByte(HL_REG)); break;
 					case 0xF: CP(&regs.a); break;
 				}
 				break;
@@ -320,7 +328,7 @@ int decode(uint8_t opcode) {
 					case 0x6: printf("Sub-case 0x06\n"); break;
 					case 0x7: printf("Sub-case 0x07\n"); break;
 					case 0x8: printf("Sub-case 0x08\n"); break;
-					case 0x9: printf("Sub-case 0x09\n"); break;
+					case 0x9: ADD_SP(getNextOperand()); break;
 					case 0xA: printf("Sub-case 0x0A\n"); break;
 					case 0xB: printf("Sub-case 0x0B\n"); break;
 					case 0xC: printf("Sub-case 0x0C\n"); break;

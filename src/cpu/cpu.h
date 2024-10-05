@@ -13,6 +13,8 @@ typedef struct {
 
 // 16-bit macros
 #define HL_REG ((uint16_t)(regs.h) << 8) + ((uint16_t)(regs.l))
+#define BC_REG ((uint16_t)(regs.b) << 8) + ((uint16_t)(regs.c))
+#define DE_REG ((uint16_t)(regs.d) << 8) + ((uint16_t)(regs.e))
 
 // FLAG MACROS
 #define GET_FLAG(x) ((regs.f & (1 << x)) >> x)
@@ -35,6 +37,8 @@ void LD(uint8_t *n, uint8_t *destination);
 
 // ALU
 void ADD(uint8_t *n);
+void ADD_HL(uint16_t n);
+void ADD_SP(int8_t n);
 void ADC(uint8_t *n);
 void SUB(uint8_t *n);
 void SBC(uint8_t *n);

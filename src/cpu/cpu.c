@@ -26,9 +26,6 @@ void printRegState() {
 }
 
 void initCPU() {
-	regs.b = 10;
-	regs.c = 250;
-	
 	regs.pc = 0x0100;
 	regs.sp = 0xFFFE;
 }
@@ -67,6 +64,28 @@ void ADD(uint8_t *n) {
 	ADD_updateFlags(&initial_dest);
 }
 
+void ADD_HL(uint16_t n) {
+	// add n to HL
+	uint16_t initial = HL_REG;
+	uint16_t value = HL_REG;
+	value += n;
+	regs.h = (uint8_t)(value >> 8);
+	regs.l = (uint8_t)(value);
+	SET_FLAG(SUBTRACT, 0);
+	SET_FLAG(CARRY, (value < initial));
+	SET_FLAG(HALF, (initial < 0x0400 && value > 0x0400));
+}
+
+void ADD_SP(int8_t n) {
+	// add one (signed) byte immediate n to SP
+	uint16_t initial = regs.sp;
+	regs.sp += n;
+	SET_FLAG(SUBTRACT, 0);
+	SET_FLAG(ZERO, 0);
+	SET_FLAG(CARRY, (regs.sp < initial)); // TODO: Check this
+	SET_FLAG(HALF, (initial < 0x0010 && regs.sp >= 0x0010)); // TODO: Check this
+}
+
 void ADC(uint8_t *n) {
 	// ADD register to A and add carry flag
 	uint8_t initial_dest = regs.a;
@@ -80,7 +99,7 @@ static void SUB_updateFlags(uint8_t *initial, uint8_t *n) {
 	}
 	SET_FLAG(SUBTRACT, 1);
 	SET_FLAG(CARRY, (*initial < *n));
-	SET_FLAG(HALF, ((*initial & 0x0f) < (*n < 0x0f)));
+	SET_FLAG(HALF, ((*initial & 0x0f) < (*n < 0x0f))); //TODO: FIX THIS
 }
 
 void SUB(uint8_t *n) {
@@ -135,7 +154,7 @@ void CP(uint8_t *n) {
 		SET_FLAG(ZERO, 1);
 	}
 	SET_FLAG(SUBTRACT, 1);
-	SET_FLAG(HALF, ((*regs.a & 0x0f) < (*n < 0x0f)));
+	SET_FLAG(HALF, ((regs.a & 0x0f) < (*n < 0x0f))); //TODO: FIX THIS
 	SET_FLAG(CARRY, (regs.a < *n));
 }
 
@@ -160,7 +179,7 @@ void DEC(uint8_t *n) {
 		SET_FLAG(ZERO, 1);
 	}
 	SET_FLAG(SUBTRACT, 1);
-	SET_FLAG(HALF, ((*initial & 0x0f) < (*n < 0x0f)));
+	SET_FLAG(HALF, ((initial & 0x0f) < (*n < 0x0f))); //TODO: FIX THIS
 }
 
 
