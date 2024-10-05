@@ -34,7 +34,7 @@ void initCPU() {
 }
 
 // opcode decoder
-int execute(uint16_t opcode) {
+int execute(uint8_t opcode) {
 
 	printf("Opcode: 0x%x \n", opcode);
 	decode(opcode);
@@ -51,27 +51,27 @@ void LD(uint8_t *r1, uint8_t *r2) {
 
 // ADD:
 
-static void ADD_updateFlags(uint8_t *result, uint8_t *initial_dest) {
-	if (*result == 0) {
+static void ADD_updateFlags(uint8_t *initial_dest) {
+	if (regs.a == 0) {
 		SET_FLAG(ZERO, 1);
 	}
 	SET_FLAG(SUBTRACT, 0);
-	SET_FLAG(CARRY, (*result < *initial_dest));
-	SET_FLAG(HALF, (*initial_dest < 0x10 && *result >= 0x10));
+	SET_FLAG(CARRY, (regs.a < *initial_dest));
+	SET_FLAG(HALF, (*initial_dest < 0x10 && regs.a >= 0x10));
 }
 
-void ADD(uint8_t *destination, uint8_t *n) {
+void ADD(uint8_t *n) {
 	// ADD register to register
-	uint8_t initial_dest = *destination;
-	*destination += *n;
-	ADD_updateFlags(destination, &initial_dest);
+	uint8_t initial_dest = regs.a;
+	regs.a += *n;
+	ADD_updateFlags(&initial_dest);
 }
 
-void ADC(uint8_t *destination, uint8_t *n) {
+void ADC(uint8_t *n) {
 	// ADD register to register and add carry flag
-	uint8_t initial_dest = *destination;
-	*destination += *n + GET_FLAG(CARRY);
-	ADD_updateFlags(destination, &initial_dest);
+	uint8_t initial_dest = regs.a;
+	regs.a += *n + GET_FLAG(CARRY);
+	ADD_updateFlags(&initial_dest);
 }
 
 // BITWISE:
@@ -117,12 +117,6 @@ void INC(uint8_t *n) {
 	}
 	SET_FLAG(SUBTRACT, 0);
 	SET_FLAG(HALF, (initial < 0x10 && *n >= 0x10));
-}
-
-// Execution Flow:
-
-void JP(uint16_t *n) {
-	regs.pc = *n;
 }
 
 

@@ -2,17 +2,21 @@
 // main.c
 
 #include "src/cpu/cpu.h"
+#include "src/mmu/mmu.h"
 
 int main(int argc, char **argv) {
 	
 	initCPU();
+	initMMU();
 	
-	execute(0xCBFE);
-	execute(0x8000);
-	execute(0x8700); // add a, a
-	execute(0x8100); // add a, c
-	execute(0xB000); // OR a, b
+	execute(0x80);
+	execute(0x87); // add a, a
+	execute(0x81); // add a, c
+	execute(0xB0); // OR a, b
 	
-	execute(0x4100); // ld c into b
+	execute(0x41); // ld c into b
+	
+	execute(0x70); // ld B into HL
+	execute(0x6E); // load HL into L
 
 }

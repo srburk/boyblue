@@ -5,6 +5,6 @@
 
 #include <stdint.h>
 
-int decode(uint16_t opcode);
+int decode(uint8_t opcode);
 
 #endif

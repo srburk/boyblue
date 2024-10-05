@@ -11,6 +11,9 @@ typedef struct {
 	uint16_t sp, pc;
 } Registers;
 
+// 16-bit macros
+#define HL_REG ((uint16_t)(regs.h) << 8) + ((uint16_t)(regs.l))
+
 // FLAG MACROS
 #define GET_FLAG(x) ((regs.f & (1 << x)) >> x)
 #define SET_FLAG(x, n) (n) ? (regs.f |= (1 << (x))) : (regs.f &= ~(1 << (x))) // set flag x in F to n
@@ -25,14 +28,14 @@ void initCPU();
 
 void printRegState();
 
-int execute(uint16_t opcode);
+int execute(uint8_t opcode);
 
 // LOADS
 void LD(uint8_t *n, uint8_t *destination);
 
 // ALU
-void ADD(uint8_t *destination, uint8_t *n);
-void ADC(uint8_t *destination, uint8_t *n);
+void ADD(uint8_t *n);
+void ADC(uint8_t *n);
 
 // BITWISE
 void AND(uint8_t *n);
@@ -40,8 +43,5 @@ void OR(uint8_t *n);
 void XOR(uint8_t *n);
 
 void INC(uint8_t *n);
-
-// EXECUTION
-void JP(uint16_t *n);
 
 #endif
