@@ -61,22 +61,45 @@ static void ADD_updateFlags(uint8_t *initial_dest) {
 }
 
 void ADD(uint8_t *n) {
-	// ADD register to register
+	// ADD register to A
 	uint8_t initial_dest = regs.a;
 	regs.a += *n;
 	ADD_updateFlags(&initial_dest);
 }
 
 void ADC(uint8_t *n) {
-	// ADD register to register and add carry flag
+	// ADD register to A and add carry flag
 	uint8_t initial_dest = regs.a;
 	regs.a += *n + GET_FLAG(CARRY);
 	ADD_updateFlags(&initial_dest);
 }
 
+static void SUB_updateFlags(uint8_t *initial, uint8_t *n) {
+	if (regs.a == 0) {
+		SET_FLAG(ZERO, 1);
+	}
+	SET_FLAG(SUBTRACT, 1);
+	SET_FLAG(CARRY, (*initial < *n));
+	SET_FLAG(HALF, ((*initial & 0x0f) < (*n < 0x0f)));
+}
+
+void SUB(uint8_t *n) {
+	// subtract n from A
+	uint8_t initial = regs.a;
+	regs.a -= *n;
+	SUB_updateFlags(&initial, n);
+}
+
+void SBC(uint8_t *n) {
+	// subtract n from A and also subtract carry
+	uint8_t initial = regs.a;
+	regs.a -= (*n + GET_FLAG(CARRY));
+	SUB_updateFlags(&initial, n);
+}
+
 // BITWISE:
 
-void BITWISE_updateFlags() {
+static void BITWISE_updateFlags() {
 	if (regs.a == 0) {
 		SET_FLAG(ZERO, 1);
 	}
@@ -106,6 +129,16 @@ void XOR(uint8_t *n) {
 	BITWISE_updateFlags();
 }
 
+void CP(uint8_t *n) {
+	// compare a with n
+	if (regs.a == *n) {
+		SET_FLAG(ZERO, 1);
+	}
+	SET_FLAG(SUBTRACT, 1);
+	SET_FLAG(HALF, ((*regs.a & 0x0f) < (*n < 0x0f)));
+	SET_FLAG(CARRY, (regs.a < *n));
+}
+
 // MISC ALU:
 
 void INC(uint8_t *n) {
@@ -117,6 +150,17 @@ void INC(uint8_t *n) {
 	}
 	SET_FLAG(SUBTRACT, 0);
 	SET_FLAG(HALF, (initial < 0x10 && *n >= 0x10));
+}
+
+void DEC(uint8_t *n) {
+	// decrement register n
+	uint8_t initial = *n;
+	*n -= 1;
+	if (*n == 0) {
+		SET_FLAG(ZERO, 1);
+	}
+	SET_FLAG(SUBTRACT, 1);
+	SET_FLAG(HALF, ((*initial & 0x0f) < (*n < 0x0f)));
 }
 
 

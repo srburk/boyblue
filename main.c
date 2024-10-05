@@ -18,5 +18,7 @@ int main(int argc, char **argv) {
 	
 	execute(0x70); // ld B into HL
 	execute(0x6E); // load HL into L
+	
+	execute(0x90); // subtract b from a
 
 }

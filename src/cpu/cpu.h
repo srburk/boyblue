@@ -36,6 +36,8 @@ void LD(uint8_t *n, uint8_t *destination);
 // ALU
 void ADD(uint8_t *n);
 void ADC(uint8_t *n);
+void SUB(uint8_t *n);
+void SBC(uint8_t *n);
 
 // BITWISE
 void AND(uint8_t *n);
@@ -43,5 +45,8 @@ void OR(uint8_t *n);
 void XOR(uint8_t *n);
 
 void INC(uint8_t *n);
+void DEC(uint8_t *n);
+
+void CP(uint8_t *n);
 
 #endif

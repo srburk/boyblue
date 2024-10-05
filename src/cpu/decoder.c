@@ -22,7 +22,7 @@ int decode(uint8_t opcode) {
 					case 0x2: printf("Sub-case 0x02\n"); break;
 					case 0x3: printf("Sub-case 0x03\n"); break;
 					case 0x4: INC(&regs.b); break;
-					case 0x5: printf("Sub-case 0x05\n"); break;
+					case 0x5: DEC(&regs.b); break;
 					case 0x6: printf("Sub-case 0x06\n"); break;
 					case 0x7: printf("Sub-case 0x07\n"); break;
 					case 0x8: printf("Sub-case 0x08\n"); break;
@@ -30,7 +30,7 @@ int decode(uint8_t opcode) {
 					case 0xA: printf("Sub-case 0x0A\n"); break;
 					case 0xB: printf("Sub-case 0x0B\n"); break;
 					case 0xC: INC(&regs.c); break;
-					case 0xD: printf("Sub-case 0x0D\n"); break;
+					case 0xD: DEC(&regs.c); break;
 					case 0xE: printf("Sub-case 0x0E\n"); break;
 					case 0xF: printf("Sub-case 0x0F\n"); break;
 				}
@@ -43,7 +43,7 @@ int decode(uint8_t opcode) {
 					case 0x2: printf("Sub-case 0x02\n"); break;
 					case 0x3: printf("Sub-case 0x03\n"); break;
 					case 0x4: INC(&regs.d); break;
-					case 0x5: printf("Sub-case 0x05\n"); break;
+					case 0x5: DEC(&regs.d); break;
 					case 0x6: printf("Sub-case 0x06\n"); break;
 					case 0x7: printf("Sub-case 0x07\n"); break;
 					case 0x8: printf("Sub-case 0x08\n"); break;
@@ -51,7 +51,7 @@ int decode(uint8_t opcode) {
 					case 0xA: printf("Sub-case 0x0A\n"); break;
 					case 0xB: printf("Sub-case 0x0B\n"); break;
 					case 0xC: INC(&regs.e); break;
-					case 0xD: printf("Sub-case 0x0D\n"); break;
+					case 0xD: DEC(&regs.e); break;
 					case 0xE: printf("Sub-case 0x0E\n"); break;
 					case 0xF: printf("Sub-case 0x0F\n"); break;
 				}
@@ -64,7 +64,7 @@ int decode(uint8_t opcode) {
 					case 0x2: printf("Sub-case 0x02\n"); break;
 					case 0x3: printf("Sub-case 0x03\n"); break;
 					case 0x4: INC(&regs.h); break;
-					case 0x5: printf("Sub-case 0x05\n"); break;
+					case 0x5: DEC(&regs.h); break;
 					case 0x6: printf("Sub-case 0x06\n"); break;
 					case 0x7: printf("Sub-case 0x07\n"); break;
 					case 0x8: printf("Sub-case 0x08\n"); break;
@@ -72,7 +72,7 @@ int decode(uint8_t opcode) {
 					case 0xA: printf("Sub-case 0x0A\n"); break;
 					case 0xB: printf("Sub-case 0x0B\n"); break;
 					case 0xC: INC(&regs.l); break;
-					case 0xD: printf("Sub-case 0x0D\n"); break;
+					case 0xD: DEC(&regs.l); break;
 					case 0xE: printf("Sub-case 0x0E\n"); break;
 					case 0xF: printf("Sub-case 0x0F\n"); break;
 				}
@@ -84,8 +84,8 @@ int decode(uint8_t opcode) {
 					case 0x1: printf("Sub-case 0x01\n"); break;
 					case 0x2: printf("Sub-case 0x02\n"); break;
 					case 0x3: printf("Sub-case 0x03\n"); break;
-					case 0x4: printf("Sub-case 0x04\n"); break;
-					case 0x5: printf("Sub-case 0x05\n"); break;
+					case 0x4: INC(getByte(HL_REG)); break;
+					case 0x5: DEC(getByte(HL_REG)); break;
 					case 0x6: printf("Sub-case 0x06\n"); break;
 					case 0x7: printf("Sub-case 0x07\n"); break;
 					case 0x8: printf("Sub-case 0x08\n"); break;
@@ -93,7 +93,7 @@ int decode(uint8_t opcode) {
 					case 0xA: printf("Sub-case 0x0A\n"); break;
 					case 0xB: printf("Sub-case 0x0B\n"); break;
 					case 0xC: INC(&regs.a); break;
-					case 0xD: printf("Sub-case 0x0D\n"); break;
+					case 0xD: DEC(&regs.a); break;
 					case 0xE: printf("Sub-case 0x0E\n"); break;
 					case 0xF: printf("Sub-case 0x0F\n"); break;
 				}
@@ -206,22 +206,22 @@ int decode(uint8_t opcode) {
 			case 0x90:
 				printf("Matched case 0x90\n");
 				switch (opcode & 0x0F) {
-					case 0x0: printf("Sub-case 0x00\n"); break;
-					case 0x1: printf("Sub-case 0x01\n"); break;
-					case 0x2: printf("Sub-case 0x02\n"); break;
-					case 0x3: printf("Sub-case 0x03\n"); break;
-					case 0x4: printf("Sub-case 0x04\n"); break;
-					case 0x5: printf("Sub-case 0x05\n"); break;
-					case 0x6: printf("Sub-case 0x06\n"); break;
-					case 0x7: printf("Sub-case 0x07\n"); break;
-					case 0x8: printf("Sub-case 0x08\n"); break;
-					case 0x9: printf("Sub-case 0x09\n"); break;
-					case 0xA: printf("Sub-case 0x0A\n"); break;
-					case 0xB: printf("Sub-case 0x0B\n"); break;
-					case 0xC: printf("Sub-case 0x0C\n"); break;
-					case 0xD: printf("Sub-case 0x0D\n"); break;
-					case 0xE: printf("Sub-case 0x0E\n"); break;
-					case 0xF: printf("Sub-case 0x0F\n"); break;
+					case 0x0: SUB(&regs.b); break;
+					case 0x1: SUB(&regs.c); break;
+					case 0x2: SUB(&regs.d); break;
+					case 0x3: SUB(&regs.e); break;
+					case 0x4: SUB(&regs.h); break;
+					case 0x5: SUB(&regs.l); break;
+					case 0x6: SUB(getByte(HL_REG)); break;
+					case 0x7: SUB(&regs.a); break;
+					case 0x8: SBC(&regs.b); break;
+					case 0x9: SBC(&regs.c); break;
+					case 0xA: SBC(&regs.d); break;
+					case 0xB: SBC(&regs.e); break;
+					case 0xC: SBC(&regs.h); break;
+					case 0xD: SBC(&regs.l); break;
+					case 0xE: SBC(&regs.getByte(HL_REG)); break;
+					case 0xF: SBC(&regs.a); break;
 				}
 				break;
 			case 0xA0:
@@ -256,14 +256,14 @@ int decode(uint8_t opcode) {
 					case 0x5: OR(&regs.l); break;
 					case 0x6: OR(getByte(HL_REG)); break;
 					case 0x7: OR(&regs.a); break;
-					case 0x8: printf("Sub-case 0x08\n"); break;
-					case 0x9: printf("Sub-case 0x09\n"); break;
-					case 0xA: printf("Sub-case 0x0A\n"); break;
-					case 0xB: printf("Sub-case 0x0B\n"); break;
-					case 0xC: printf("Sub-case 0x0C\n"); break;
-					case 0xD: printf("Sub-case 0x0D\n"); break;
-					case 0xE: printf("Sub-case 0x0E\n"); break;
-					case 0xF: printf("Sub-case 0x0F\n"); break;
+					case 0x8: CP(&regs.b); break;
+					case 0x9: CP(&regs.c); break;
+					case 0xA: CP(&regs.d); break;
+					case 0xB: CP(&regs.e); break;
+					case 0xC: CP(&regs.h); break;
+					case 0xD: CP(&regs.l); break;
+					case 0xE: CP(&regs.getByte(HL_REG)); break;
+					case 0xF: CP(&regs.a); break;
 				}
 				break;
 			case 0xC0:
