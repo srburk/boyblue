@@ -13,4 +13,6 @@ int main(int argc, char **argv) {
 	execute(0x8100); // add a, c
 	execute(0xB000); // OR a, b
 	
+	execute(0x4100); // ld c into b
+
 }

@@ -27,6 +27,9 @@ void printRegState();
 
 int execute(uint16_t opcode);
 
+// LOADS
+void LD(uint8_t *n, uint8_t *destination);
+
 // ALU
 void ADD(uint8_t *destination, uint8_t *n);
 void ADC(uint8_t *destination, uint8_t *n);
@@ -34,5 +37,11 @@ void ADC(uint8_t *destination, uint8_t *n);
 // BITWISE
 void AND(uint8_t *n);
 void OR(uint8_t *n);
+void XOR(uint8_t *n);
+
+void INC(uint8_t *n);
+
+// EXECUTION
+void JP(uint16_t *n);
 
 #endif
