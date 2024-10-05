@@ -13,7 +13,10 @@ $(TARGET): $(OBJS)
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 	
-.PHONY: all
+clean:
+	rm -f $(OBJS) $(TARGET) 
+	
+.PHONY: all clean
 
 #build:  main.c
 # 	$(CC) $(CFLAGS) $(SRCS) $(LINKER_FLAGS) -o $(BUILD_DIR)/$(TARGET)

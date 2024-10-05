@@ -2,6 +2,7 @@
 // mmu.c
 
 #include "mmu.h"
+#include "../cpu/cpu.h"
 #include <stdio.h>
 
 void initMMU() {
@@ -15,7 +16,29 @@ void loadMemory(uint8_t *ptr, uint16_t count, uint16_t start) {
 	}
 }
 
+// dump stack count each way
+void dumpStack(uint8_t count) {
+	for (int i = regs.sp - count; i < regs.sp + count; i++) {
+		if (i == regs.sp) {
+			printf("  v  ");
+		} else {
+			printf("     ");
+		}
+	}
+	printf("\n");
+
+	for (int i = regs.sp - count; i < regs.sp + count; i++) {
+		printf("0x%.2X ", memory[i]);
+	}
+	printf("\n");
+}
+
 uint8_t* getByte(uint16_t address) {
 	// check memory map here
 	return &memory[address];
+}
+
+void setByte(uint8_t n, uint16_t address) {
+	// check memory map here
+	memory[address] = n;
 }

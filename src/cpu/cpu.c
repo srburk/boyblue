@@ -3,6 +3,7 @@
 
 #include "cpu.h"
 #include "decoder.h"
+#include "../mmu/mmu.h"
 
 #include <stdio.h>
 
@@ -40,12 +41,6 @@ int execute(uint8_t opcode) {
 
 // instruction primitives:
 
-// LD:
-void LD(uint8_t *r1, uint8_t *r2) {
-	// ld r2 into r1
-	*r1 = *r2;
-}
-
 // ADD:
 
 static void ADD_updateFlags(uint8_t *initial_dest) {
@@ -64,11 +59,11 @@ void ADD(uint8_t *n) {
 	ADD_updateFlags(&initial_dest);
 }
 
-void ADD_HL(uint16_t n) {
+void ADD_HL(uint16_t nn) {
 	// add n to HL
 	uint16_t initial = HL_REG;
 	uint16_t value = HL_REG;
-	value += n;
+	value += nn;
 	regs.h = (uint8_t)(value >> 8);
 	regs.l = (uint8_t)(value);
 	SET_FLAG(SUBTRACT, 0);
@@ -171,6 +166,23 @@ void INC(uint8_t *n) {
 	SET_FLAG(HALF, (initial < 0x10 && *n >= 0x10));
 }
 
+// These also function as decrements since no flags are impacted
+void INC_BC(int8_t n) {
+	uint16_t value = BC_REG + n;
+	SET_BC(value);
+}
+void INC_DE(int8_t n) {
+	uint16_t value = DE_REG + n;
+	SET_DE(value);
+}
+void INC_HL(int8_t n) {
+	uint16_t value = HL_REG + n;
+	SET_HL(value);
+}
+void INC_SP(int8_t n) {
+	regs.sp += n;
+}
+
 void DEC(uint8_t *n) {
 	// decrement register n
 	uint8_t initial = *n;
@@ -180,6 +192,90 @@ void DEC(uint8_t *n) {
 	}
 	SET_FLAG(SUBTRACT, 1);
 	SET_FLAG(HALF, ((initial & 0x0f) < (*n < 0x0f))); //TODO: FIX THIS
+}
+
+// LD:
+void LD(uint8_t *r1, uint8_t *r2) {
+	// ld r2 into r1
+	*r1 = *r2;
+}
+
+void LDHL(int8_t n) {
+	// put SP + n EA into HL
+	uint16_t initial = HL_REG;
+	SET_HL(regs.sp + n);
+	SET_FLAG(ZERO, 0);
+	SET_FLAG(SUBTRACT, 0);
+	SET_FLAG(CARRY, (HL_REG < initial));
+	SET_FLAG(HALF, (initial < 0x0400 && HL_REG > 0x0400));
+}
+
+// STACK Manipulation
+
+void PUSH(uint16_t nn) {
+	setByte((uint8_t)(nn >> 8), regs.sp--);
+	setByte((uint8_t)(nn), regs.sp--);
+	dumpStack(7);
+}
+
+static uint16_t POP() {
+	uint16_t value;
+	value = (uint16_t)(*getByte(regs.sp++)) << 8;
+	value |= *getByte(regs.sp++);
+	return value;
+}
+
+void POP(VirtualRegister reg) {
+	// not a great system for right now
+	// typedef enum { AF = 0, BC = 1, DE = 2, HL = 3 } VirtualRegister;
+	uint16_t value = POP();
+		
+	switch(reg) {
+		case AF: SET_AF(value); break;
+		case BC: SET_BC(value); break;
+		case DE: SET_DE(value); break;
+		case HL: SET_HL(value); break;
+	}
+	dumpStack(7);
+}
+
+void CALL(uint16_t nn) {
+	// push next instruction address to stack and jump to address nn
+	printf("Saving 0x%.4X to the stack in chunks: 0x%.2X 0x%.2X\n", regs.pc, (uint8_t)(regs.pc >> 8), (uint8_t)(regs.pc));
+	setByte((uint8_t)(regs.pc >> 8), regs.sp);
+	setByte((uint8_t)(regs.pc), regs.sp - 1);
+	regs.sp -= 2;
+	regs.pc = nn;
+	dumpStack(7);
+}
+
+void CALL_CC(CC cc, uint16_t nn) {
+	// nz if zero = 0, z if zero = 1, nc if c = 0, c if c = 1
+	// NZ = 0, Z = 1, NC = 2, C = 3
+	switch (cc) {
+		case NZ: if (GET_FLAG(ZERO)) return; break;
+		case Z: if (!GET_FLAG(ZERO)) return; break;
+		case NC: if (GET_FLAG(CARRY)) return; break;
+		case C: if (!GET_FLAG(CARRY)) return; break;
+	}
+	CALL(nn);
+}
+
+void RET() {
+	// pop 2 bytes from the stack and jmp to address
+	regs.pc = POP();
+}
+
+void RET_CC(CC cc) {
+// nz if zero = 0, z if zero = 1, nc if c = 0, c if c = 1
+	// NZ = 0, Z = 1, NC = 2, C = 3
+	switch (cc) {
+		case NZ: if (GET_FLAG(ZERO)) return; break;
+		case Z: if (!GET_FLAG(ZERO)) return; break;
+		case NC: if (GET_FLAG(CARRY)) return; break;
+		case C: if (!GET_FLAG(CARRY)) return; break;
+	}
+	RET();
 }
 
 

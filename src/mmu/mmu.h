@@ -6,13 +6,14 @@
 
 #include <stdint.h>
 
-uint8_t memory[0xFFFF];
+static uint8_t memory[0xFFFF];
 
 void initMMU();
 
 void loadMemory(uint8_t *ptr, uint16_t size, uint16_t start);
-void dumpMemory();
+void dumpStack(uint8_t count);
 
 uint8_t* getByte(uint16_t address);
+void setByte(uint8_t n, uint16_t address);
 
 #endif
