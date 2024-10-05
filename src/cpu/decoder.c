@@ -64,7 +64,7 @@ int decode(uint8_t opcode) {
 					case 0x5: DEC(&regs.d); break;
 					case 0x6: printf("Sub-case 0x06\n"); break;
 					case 0x7: printf("Sub-case 0x07\n"); break;
-					case 0x8: printf("Sub-case 0x08\n"); break;
+					case 0x8: JR(getNextOperand()); break;
 					case 0x9: ADD_HL(DE_REG); break;
 					case 0xA: printf("Sub-case 0x0A\n"); break;
 					case 0xB: INC_DE(-1); break;
@@ -77,7 +77,7 @@ int decode(uint8_t opcode) {
 			case 0x20:
 				printf("Matched case 0x20\n");
 				switch (opcode & 0x0F) {
-					case 0x0: printf("Sub-case 0x00\n"); break;
+					case 0x0: JR_CC(NZ, getNextOperand()); break;
 					case 0x1: SET_HL(getNextLargeOperand()); break;
 					case 0x2: printf("Sub-case 0x02\n"); break;
 					case 0x3: INC_HL(1); break;
@@ -85,7 +85,7 @@ int decode(uint8_t opcode) {
 					case 0x5: DEC(&regs.h); break;
 					case 0x6: printf("Sub-case 0x06\n"); break;
 					case 0x7: printf("Sub-case 0x07\n"); break;
-					case 0x8: printf("Sub-case 0x08\n"); break;
+					case 0x8: JR_CC(Z, getNextOperand()); break;
 					case 0x9: ADD_HL(HL_REG); break;
 					case 0xA: printf("Sub-case 0x0A\n"); break;
 					case 0xB: INC_HL(-1); break;
@@ -98,7 +98,7 @@ int decode(uint8_t opcode) {
 			case 0x30:
 				printf("Matched case 0x30\n");
 				switch (opcode & 0x0F) {
-					case 0x0: printf("Sub-case 0x00\n"); break;
+					case 0x0: JR_CC(NC, getNextOperand()); break;
 					case 0x1: regs.sp = getNextLargeOperand(); break;
 					case 0x2: printf("Sub-case 0x02\n"); break;
 					case 0x3: INC_SP(1); break;
@@ -106,7 +106,7 @@ int decode(uint8_t opcode) {
 					case 0x5: DEC(getByte(HL_REG)); break;
 					case 0x6: printf("Sub-case 0x06\n"); break;
 					case 0x7: printf("Sub-case 0x07\n"); break;
-					case 0x8: printf("Sub-case 0x08\n"); break;
+					case 0x8: JR_CC(C, getNextOperand()); break;
 					case 0x9: ADD_HL(regs.sp); break;
 					case 0xA: printf("Sub-case 0x0A\n"); break;
 					case 0xB: INC_SP(-1); break;
@@ -289,15 +289,15 @@ int decode(uint8_t opcode) {
 				switch (opcode & 0x0F) {
 					case 0x0: RET_CC(NZ); break;
 					case 0x1: POP(BC); break;
-					case 0x2: printf("Sub-case 0x02\n"); break;
-					case 0x3: printf("Sub-case 0x03\n"); break;
+					case 0x2: JP_CC(NZ, getNextLargeOperand()); break;
+					case 0x3: JP(getNextLargeOperand()); break;
 					case 0x4: CALL_CC(NZ, getNextLargeOperand()); break;
 					case 0x5: PUSH(BC_REG); break;
 					case 0x6: printf("Sub-case 0x06\n"); break;
 					case 0x7: printf("Sub-case 0x07\n"); break;
 					case 0x8: RET_CC(Z); break;
 					case 0x9: RET(); break;
-					case 0xA: printf("Sub-case 0x0A\n"); break;
+					case 0xA: JP_CC(Z, getNextLargeOperand()); break;
 					case 0xB: printf("Sub-case 0x0B\n"); break;
 					case 0xC: CALL_CC(Z, getNextLargeOperand()); break;
 					case 0xD: CALL(getNextLargeOperand()); break;
@@ -310,7 +310,7 @@ int decode(uint8_t opcode) {
 				switch (opcode & 0x0F) {
 					case 0x0: RET_CC(NC); break;
 					case 0x1: POP(DE); break;
-					case 0x2: printf("Sub-case 0x02\n"); break;
+					case 0x2: JP_CC(NC, getNextLargeOperand()); break;
 					case 0x3: printf("Sub-case 0x03\n"); break;
 					case 0x4: CALL_CC(NC, getNextLargeOperand()); break;
 					case 0x5: PUSH(DE_REG); break;
@@ -318,7 +318,7 @@ int decode(uint8_t opcode) {
 					case 0x7: printf("Sub-case 0x07\n"); break;
 					case 0x8: RET_CC(C); break;
 					case 0x9: printf("Sub-case 0x09\n"); break;
-					case 0xA: printf("Sub-case 0x0A\n"); break;
+					case 0xA: JP_CC(C, getNextLargeOperand()); break;
 					case 0xB: printf("Sub-case 0x0B\n"); break;
 					case 0xC: CALL_CC(C, getNextLargeOperand()); break;
 					case 0xD: printf("Sub-case 0x0D\n"); break;
@@ -337,8 +337,8 @@ int decode(uint8_t opcode) {
 					case 0x5: PUSH(HL_REG); break;
 					case 0x6: printf("Sub-case 0x06\n"); break;
 					case 0x7: printf("Sub-case 0x07\n"); break;
-					case 0x8: printf("Sub-case 0x08\n"); break;
-					case 0x9: ADD_SP(getNextOperand()); break;
+					case 0x8: ADD_SP(getNextOperand()); break;
+					case 0x9: JP(HL_REG); break;
 					case 0xA: printf("Sub-case 0x0A\n"); break;
 					case 0xB: printf("Sub-case 0x0B\n"); break;
 					case 0xC: printf("Sub-case 0x0C\n"); break;

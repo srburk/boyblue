@@ -218,7 +218,7 @@ void PUSH(uint16_t nn) {
 	dumpStack(7);
 }
 
-static uint16_t POP() {
+static uint16_t POP_PRIM() {
 	uint16_t value;
 	value = (uint16_t)(*getByte(regs.sp++)) << 8;
 	value |= *getByte(regs.sp++);
@@ -228,7 +228,7 @@ static uint16_t POP() {
 void POP(VirtualRegister reg) {
 	// not a great system for right now
 	// typedef enum { AF = 0, BC = 1, DE = 2, HL = 3 } VirtualRegister;
-	uint16_t value = POP();
+	uint16_t value = POP_PRIM();
 		
 	switch(reg) {
 		case AF: SET_AF(value); break;
@@ -263,7 +263,7 @@ void CALL_CC(CC cc, uint16_t nn) {
 
 void RET() {
 	// pop 2 bytes from the stack and jmp to address
-	regs.pc = POP();
+	regs.pc = POP_PRIM();
 }
 
 void RET_CC(CC cc) {
@@ -276,6 +276,35 @@ void RET_CC(CC cc) {
 		case C: if (!GET_FLAG(CARRY)) return; break;
 	}
 	RET();
+}
+
+// execution control
+
+void JP(uint16_t nn) {
+	regs.pc = nn;
+}
+
+void JP_CC(CC cc, uint16_t nn) {
+	switch (cc) {
+		case NZ: if (GET_FLAG(ZERO)) return; break;
+		case Z: if (!GET_FLAG(ZERO)) return; break;
+		case NC: if (GET_FLAG(CARRY)) return; break;
+		case C: if (!GET_FLAG(CARRY)) return; break;
+	}
+	JP(nn);
+}
+
+void JR(int8_t n) {
+	regs.pc += n;
+}
+void JR_CC(CC cc, int8_t n) {
+	switch (cc) {
+		case NZ: if (GET_FLAG(ZERO)) return; break;
+		case Z: if (!GET_FLAG(ZERO)) return; break;
+		case NC: if (GET_FLAG(CARRY)) return; break;
+		case C: if (!GET_FLAG(CARRY)) return; break;
+	}
+	JR(n);
 }
 
 

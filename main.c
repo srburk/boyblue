@@ -12,7 +12,6 @@ int main(int argc, char **argv) {
 	initMMU();
 	
 	uint8_t block[] = {
-		0xE9, 0x10, // add FA to SP
 		0x04, // inc b
 		0x33, // inc sp
 		0x3B, // decrement sp

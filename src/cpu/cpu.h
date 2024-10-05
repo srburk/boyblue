@@ -97,6 +97,13 @@ void CALL(uint16_t nn);
 void CALL_CC(CC cc, uint16_t nn);
 void RST(uint8_t n);
 void RET();
+void RET_CC(CC cc);
+
+// execution control
+void JP(uint16_t nn);
+void JP_CC(CC cc, uint16_t nn);
+void JR(int8_t n);
+void JR_CC(CC cc, int8_t n);
 
 // load immediate 16 bit values - These can be implemented in one step in decoder
 // void LD_BC(uint16_t n);
