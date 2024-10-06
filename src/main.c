@@ -5,8 +5,10 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
-#define WINDOW_HEIGHT 500
-#define WINDOW_WIDTH 600
+#define WINDOW_WIDTH 160
+#define WINDOW_HEIGHT 144
+
+#define WINDOW_SCALE 3
 
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
@@ -19,8 +21,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
         return SDL_APP_FAILURE;
     }
     
-    SDL_WindowFlags windowFlags = SDL_WINDOW_RESIZABLE;
-    if (!SDL_CreateWindowAndRenderer("boyblue", WINDOW_WIDTH, WINDOW_HEIGHT, windowFlags, &window, &renderer)) {
+    if (!SDL_CreateWindowAndRenderer("boyblue", WINDOW_SCALE * WINDOW_WIDTH, WINDOW_SCALE * WINDOW_HEIGHT, 0, &window, &renderer)) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Couldn't create SDL window", SDL_GetError(), NULL);
     }
 
