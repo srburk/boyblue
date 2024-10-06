@@ -195,6 +195,12 @@ void DEC(uint8_t *n) {
 }
 
 // LD:
+
+void STR(uint16_t address) {
+	// made up instruction that makes more sense to me
+	setByte(regs.a, address);
+}
+
 void LD(uint8_t *r1, uint8_t *r2) {
 	// ld r2 into r1
 	*r1 = *r2;

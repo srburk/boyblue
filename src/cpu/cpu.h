@@ -63,6 +63,7 @@ void printRegState();
 int execute(uint8_t opcode);
 
 // LOADS
+void STR(uint16_t address);
 void LD(uint8_t *n, uint8_t *destination);
 void LDHL(int8_t n);
 
