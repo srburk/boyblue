@@ -32,7 +32,6 @@ int decode(uint8_t opcode) {
 	if (opcode == 0xCB) { // check leading bits
 		printf("CB00\n");
 	} else {
-		printf("Opcode prefix: 0x%x\n", opcode);
 		switch (opcode & 0xF0) { // match higher level
 			case 0x00:
 				printf("Matched case 0x00\n");
@@ -44,15 +43,15 @@ int decode(uint8_t opcode) {
 					case 0x4: INC(&regs.b); break;
 					case 0x5: DEC(&regs.b); break;
 					case 0x6: immediate8 = getNextOperand(); LD(&regs.b, &immediate8); break;
-					case 0x7: printf("Sub-case 0x07\n"); break;
+					case 0x7: RLCA(); break;
 					case 0x8: regs.sp = getNextLargeOperand(); break;
 					case 0x9: ADD_HL(BC_REG); break;
-					case 0xA: printf("Sub-case 0x0A\n"); break;
+					case 0xA: STR(*getByte(BC_REG)); break;
 					case 0xB: INC_BC(-1); break;
 					case 0xC: INC(&regs.c); break;
 					case 0xD: DEC(&regs.c); break;
 					case 0xE: immediate8 = getNextOperand(); LD(&regs.c, &immediate8); break;
-					case 0xF: printf("Sub-case 0x0F\n"); break;
+					case 0xF: RRCA(); break;
 				}
 				break;
 			case 0x10:
@@ -65,7 +64,7 @@ int decode(uint8_t opcode) {
 					case 0x4: INC(&regs.d); break;
 					case 0x5: DEC(&regs.d); break;
 					case 0x6: immediate8 = getNextOperand(); LD(&regs.d, &immediate8); break;
-					case 0x7: printf("Sub-case 0x07\n"); break;
+					case 0x7: RLA(); break;
 					case 0x8: JR(getNextOperand()); break;
 					case 0x9: ADD_HL(DE_REG); break;
 					case 0xA: STR(*getByte(DE_REG)); break;
@@ -73,7 +72,7 @@ int decode(uint8_t opcode) {
 					case 0xC: INC(&regs.e); break;
 					case 0xD: DEC(&regs.e); break;
 					case 0xE: immediate8 = getNextOperand(); LD(&regs.e, &immediate8); break;
-					case 0xF: printf("Sub-case 0x0F\n"); break;
+					case 0xF: RRA(); break;
 				}
 				break;
 			case 0x20:

@@ -106,10 +106,13 @@ void JP_CC(CC cc, uint16_t nn);
 void JR(int8_t n);
 void JR_CC(CC cc, int8_t n);
 
-// load immediate 16 bit values - These can be implemented in one step in decoder
-// void LD_BC(uint16_t n);
-// void LD_DE(uint16_t n);
-// void LD_HL(uint16_t n);
-// void LD_SP(uint16_t n);
+// rotates and shifts
+void RLCA();
+void RLA();
+void RRCA();
+void RRA();
+void SLA(uint8_t* n);
+void SRA(uint8_t* n);
+void SRL(uint8_t* n);
 
 #endif

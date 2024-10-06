@@ -314,3 +314,74 @@ void JR_CC(CC cc, int8_t n) {
 }
 
 
+
+// rotates and shifts
+
+static void SHIFT_updateFlags(uint8_t* n) {
+	SET_FLAG(ZERO, *n == 0);
+	SET_FLAG(SUBTRACT, 0);
+	SET_FLAG(HALF, 0);
+}
+
+void RLCA() {
+	// rotate A left old bit 7 becomes carry flag 
+	uint8_t msb = regs.a >> 7; // get MSB
+	regs.a = regs.a << 1;
+	regs.a += msb;
+	SET_FLAG(CARRY, msb);
+	SHIFT_updateFlags(&regs.a);
+}
+void RLA() {
+	// rotate A left through carry flag
+	uint8_t msb = regs.a >> 7; // get MSB
+	regs.a = regs.a << 1;
+	regs.a += GET_FLAG(CARRY);
+	SET_FLAG(CARRY, msb);
+	SHIFT_updateFlags(&regs.a);
+}
+
+void RRCA() {
+	// rotate A right old bit 0 becomes carry flag 
+	uint8_t lsb = regs.a & 0x01; // get LSB
+	regs.a = regs.a >> 1;
+	regs.a |= lsb << 7;
+	SET_FLAG(CARRY, lsb);
+	SHIFT_updateFlags(&regs.a);
+}
+void RRA() {
+	// rotate A right through carry flag
+	uint8_t lsb = regs.a & 0x01; // get LSB
+	regs.a = regs.a >> 1;
+	regs.a |= GET_FLAG(CARRY) << 7;
+	SET_FLAG(CARRY, lsb);
+	SHIFT_updateFlags(&regs.a);
+}
+
+void SLA(uint8_t* n) {
+	// shift n left into carry, LSB becomes 0
+	SET_FLAG(CARRY, ((*n & (1 << 7)) >> 7));
+	*n = *n << 1;
+	SHIFT_updateFlags(n);
+}
+void SRA(uint8_t* n) {
+	// shift n rights into carry, MSB unaffected
+	SET_FLAG(CARRY, *n);
+	*n = *n >> 1;
+	if (*n & 0x40) {
+    	*n |= 0x80;  // set MSB to next highest level bit
+	}	 
+	SHIFT_updateFlags(n);
+}
+void SRL(uint8_t* n) {
+	// shift n rights into carry, MSB 0
+	SET_FLAG(CARRY, *n);
+	*n = *n >> 1;
+	SHIFT_updateFlags(n);
+}
+
+
+
+
+
+
+

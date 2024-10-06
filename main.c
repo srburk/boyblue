@@ -36,6 +36,12 @@ int main(int argc, char **argv) {
 	
 	printf("Reached end of program...\n");
 	
+	regs.a = 0b10010001;
+	SET_FLAG(CARRY, 1);
+	RRA();
+	printf("Number: 0x%.2X\n", regs.a);
+	printRegState();
+	
 //	execute(0x80);
 // 	execute(0x87); // add a, a
 // 	execute(0x81); // add a, c
