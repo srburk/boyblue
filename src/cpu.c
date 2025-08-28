@@ -3,9 +3,21 @@
 
 #include "cpu.h"
 #include "decoder.h"
-#include "../mmu/mmu.h"
+#include "mmu.h"
 
 #include <stdio.h>
+
+// static uint16_t * reg_id_ptr(RegID reg_id) {
+// 	switch (reg_id) {
+// 		case AF: return &regs.af;
+// 		case BC: return &regs.bc;
+// 		case DE: return &regs.de;
+// 		case HL: return &regs.hl;
+// 		case SP: return &regs.sp;
+// 		default:
+// 			// big error
+// 	}
+// };
 
 void printRegState() {
 	printf("----------------------------------- \n");  
@@ -34,9 +46,9 @@ void initCPU() {
 // opcode decoder
 int execute(uint8_t opcode) {
 
-	printf("Opcode: 0x%x \n", opcode);
+// 	printf("Opcode: 0x%x \n", opcode);
 	decode(opcode);
-	printRegState();
+// 	printRegState();
 }
 
 // instruction primitives:
@@ -61,14 +73,15 @@ void ADD(uint8_t *n) {
 
 void ADD_HL(uint16_t nn) {
 	// add n to HL
-	uint16_t initial = HL_REG;
-	uint16_t value = HL_REG;
-	value += nn;
-	regs.h = (uint8_t)(value >> 8);
-	regs.l = (uint8_t)(value);
+	uint16_t initial = regs.hl;
+// 	uint16_t value = HL_REG;
+// 	value += nn;
+// 	regs.h = (uint8_t)(value >> 8);
+// 	regs.l = (uint8_t)(value);
+	regs.hl += nn;
 	SET_FLAG(SUBTRACT, 0);
-	SET_FLAG(CARRY, (value < initial));
-	SET_FLAG(HALF, (initial < 0x0400 && value > 0x0400));
+	SET_FLAG(CARRY, (regs.hl < initial));
+	SET_FLAG(HALF, (initial < 0x0400 && regs.hl > 0x0400));
 }
 
 void ADD_SP(int8_t n) {
@@ -166,21 +179,9 @@ void INC(uint8_t *n) {
 	SET_FLAG(HALF, (initial < 0x10 && *n >= 0x10));
 }
 
-// These also function as decrements since no flags are impacted
-void INC_BC(int8_t n) {
-	uint16_t value = BC_REG + n;
-	SET_BC(value);
-}
-void INC_DE(int8_t n) {
-	uint16_t value = DE_REG + n;
-	SET_DE(value);
-}
-void INC_HL(int8_t n) {
-	uint16_t value = HL_REG + n;
-	SET_HL(value);
-}
-void INC_SP(int8_t n) {
-	regs.sp += n;
+void INC_16(uint16_t *nn) {
+	// increment register nn by n
+	*nn += 1;
 }
 
 void DEC(uint8_t *n) {
@@ -192,6 +193,10 @@ void DEC(uint8_t *n) {
 	}
 	SET_FLAG(SUBTRACT, 1);
 	SET_FLAG(HALF, ((initial & 0x0f) < (*n < 0x0f))); //TODO: FIX THIS
+}
+
+void DEC_16(uint16_t *nn) {
+	*nn -= 1;
 }
 
 // LD:
@@ -208,12 +213,12 @@ void LD(uint8_t *r1, uint8_t *r2) {
 
 void LDHL(int8_t n) {
 	// put SP + n EA into HL
-	uint16_t initial = HL_REG;
-	SET_HL(regs.sp + n);
+	uint16_t initial = regs.hl;
+	regs.hl = regs.sp + n;
 	SET_FLAG(ZERO, 0);
 	SET_FLAG(SUBTRACT, 0);
-	SET_FLAG(CARRY, (HL_REG < initial));
-	SET_FLAG(HALF, (initial < 0x0400 && HL_REG > 0x0400));
+	SET_FLAG(CARRY, (regs.hl < initial));
+	SET_FLAG(HALF, (initial < 0x0400 && regs.hl > 0x0400));
 }
 
 // STACK Manipulation
@@ -225,23 +230,19 @@ void PUSH(uint16_t nn) {
 }
 
 static uint16_t POP_PRIM() {
-	uint16_t value;
-	value = (uint16_t)(*getByte(regs.sp++)) << 8;
-	value |= *getByte(regs.sp++);
+	uint16_t lo = *getByte(regs.sp++);
+	uint16_t hi = *getByte(regs.sp++);
+	uint16_t value = lo | (hi << 8);
 	return value;
 }
 
-void POP(VirtualRegister reg) {
+void POP(uint16_t *nn) {
 	// not a great system for right now
-	// typedef enum { AF = 0, BC = 1, DE = 2, HL = 3 } VirtualRegister;
+	// typedef enum { AF = 0, BC = 1, DE = 2, HL = 3 } RegisterPair;
 	uint16_t value = POP_PRIM();
+// 	uint16_t* reg_ptr = reg_id_ptr(reg_id);
+	*nn = value;
 		
-	switch(reg) {
-		case AF: SET_AF(value); break;
-		case BC: SET_BC(value); break;
-		case DE: SET_DE(value); break;
-		case HL: SET_HL(value); break;
-	}
 	dumpStack(7);
 }
 
@@ -263,6 +264,8 @@ void CALL_CC(CC cc, uint16_t nn) {
 		case Z: if (!GET_FLAG(ZERO)) return; break;
 		case NC: if (GET_FLAG(CARRY)) return; break;
 		case C: if (!GET_FLAG(CARRY)) return; break;
+		default:
+		// something is broken
 	}
 	CALL(nn);
 }
@@ -280,6 +283,8 @@ void RET_CC(CC cc) {
 		case Z: if (!GET_FLAG(ZERO)) return; break;
 		case NC: if (GET_FLAG(CARRY)) return; break;
 		case C: if (!GET_FLAG(CARRY)) return; break;
+		default:
+		// something is broken
 	}
 	RET();
 }
@@ -296,6 +301,8 @@ void JP_CC(CC cc, uint16_t nn) {
 		case Z: if (!GET_FLAG(ZERO)) return; break;
 		case NC: if (GET_FLAG(CARRY)) return; break;
 		case C: if (!GET_FLAG(CARRY)) return; break;
+		default:
+		// something is broken
 	}
 	JP(nn);
 }
@@ -312,8 +319,6 @@ void JR_CC(CC cc, int8_t n) {
 	}
 	JR(n);
 }
-
-
 
 // rotates and shifts
 

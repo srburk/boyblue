@@ -2,3 +2,7 @@ boyblue
 *.o
 .DS_Store
 /build
+
+# for now
+cpu_instrs.gb
+*.bin
