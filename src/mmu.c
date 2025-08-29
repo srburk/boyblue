@@ -3,12 +3,24 @@
 
 #include "mmu.h"
 #include "cpu.h"
+#include "log.h"
 
 #include <stdio.h>
 #include <stdint.h>
 
-void initMMU() {
-	memory[0] = 0x16; // for testing
+struct MMU_t{
+	GPU_t *gpu;
+};
+
+MMU_t *create_MMU(GPU_t *gpu) {
+	if (!gpu) {
+		log_event(LOG_ERROR, LOG_MMU, "gpu pointer is NULL");
+		return NULL;
+	}
+	MMU_t *mmu = malloc(sizeof(MMU_t));
+	if (!mmu) return NULL;
+	mmu->gpu = gpu;
+	return mmu;
 }
 
 void loadMemory(uint8_t *ptr, uint16_t size, uint16_t start) {
@@ -21,30 +33,32 @@ void loadMemory(uint8_t *ptr, uint16_t size, uint16_t start) {
 void loadFileToMemory(const char *filename, uint16_t start) {
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
-        fprintf(stderr, "Failed to open ROM: %s\n", filename);
+		log_event(LOG_ERROR, LOG_MMU, "Failed to open ROM: %s", filename);
     }
     
     if (fseek(fp, 0, SEEK_END) != 0) {
-		fprintf(stderr, "Failed to seek to end of ROM: %s\n", filename);
+		log_event(LOG_ERROR, LOG_MMU, "Failed to seek to end of ROM: %s", filename);
 		fclose(fp);
 	}
 
     long int file_size = ftell(fp);
     if (file_size < 0) {
-        fprintf(stderr, "Failed to get ROM size: %s\n", filename);
+		log_event(LOG_ERROR, LOG_MMU, "Failed to get ROM size: %s", filename);
         fclose(fp);
     }
     rewind(fp); // go back to beginning of file
     
-    printf("Size is %ld bytes...\n", file_size);
+	log_event(LOG_INFO, LOG_MMU, "Size is %ld bytes ", file_size);
 
     const size_t read_bytes = fread(memory + start, sizeof memory[0], (size_t)file_size, fp);
     
     if (read_bytes != (size_t)file_size) {
-        if (feof(fp))
-            printf("Error reading %s: unexpected end of file\n", filename);
-        else if (ferror(fp))
-            printf("Error reading %s", filename);
+        if (feof(fp)) {
+			log_event( LOG_ERROR, LOG_MMU, "Unexpected end of file for file %s ", filename);
+        }
+        else if (ferror(fp)) {
+			log_event(LOG_ERROR, LOG_MMU, "Failed to read file %s ", filename);
+        }
     }
     
     fclose(fp);
@@ -52,18 +66,18 @@ void loadFileToMemory(const char *filename, uint16_t start) {
 
 void dumpMemoryToFile(const char *filename, uint16_t start, uint16_t end) {
     // if (start >= MEMORY_SIZE || end >= MEMORY_SIZE || start > end) {
-//         fprintf(stderr, "dumpMemoryToFile: invalid range 0x%04X-0x%04X\n", start, end);
+//         fprintf(stderr, "dumpMemoryToFile: invalid range 0x%04X-0x%04X", start, end);
 //         return;
 //     }
 
     FILE *f = fopen(filename, "wb");
     if (!f) {
-        fprintf(stderr, "Failed to open file for memory dump: %s\n", filename);
+		log_event(LOG_ERROR, LOG_MMU, "Failed to open file for memory dump: %s", filename);
         return;
     }
     fwrite(&memory[start], 1, end - start + 1, f);
     fclose(f);
-    printf("Memory dumped to %s (0x%04X - 0x%04X)\n", filename, start, end);
+	log_event(LOG_INFO, LOG_MMU, "Memory dumped to %s (0x%04X - 0x%04X)", filename, start, end);
 }
 
 // dump stack count each way
@@ -75,12 +89,12 @@ void dumpStack(uint8_t count) {
 			printf("     ");
 		}
 	}
-	printf("\n");
+	printf("");
 
 	for (int i = regs.sp - count; i < regs.sp + count; i++) {
 		printf("0x%.2X ", memory[i]);
 	}
-	printf("\n");
+	printf("");
 }
 
 uint8_t* getByte(uint16_t address) {
@@ -88,16 +102,14 @@ uint8_t* getByte(uint16_t address) {
 	return &memory[address];
 }
 
-void setByte(uint8_t n, uint16_t address) {
-	printf("Writing 0x%02X to 0x%04X\n", n, address);
+void setByte(MMU_t *mmu, uint8_t n, uint16_t address) {
     if (address <= 0x7FFF) {
         // ROM
-        printf("Attempt to write 0x%02X to ROM at 0x%04X ignored\n", n, address);
+        log_event(LOG_ERROR, LOG_MMU, "Attempt to write 0x%02X to ROM at 0x%04X INGORED", n, address);
         return;
     } else if (address >= 0x8000 && address <= 0x9FFF) {
         // VRAM
-        memory[address] = n;
-		printf("VRAM WRITE Attempt to write 0x%02X at 0x%04X ignored\n", n, address);
+		write_vram(mmu->gpu, n, address);
     } else if (address >= 0xA000 && address <= 0xBFFF) {
         // External RAM
         memory[address] = n;
@@ -113,12 +125,12 @@ void setByte(uint8_t n, uint16_t address) {
         memory[address] = n;
     } else if (address >= 0xFEA0 && address <= 0xFEFF) {
         // Unusable memory
-        printf("Attempt to write to unusable memory 0x%04X ignored\n", address);
+		log_event(LOG_ERROR, LOG_MMU, "Attempt to write 0x%02X to unsuable memory at 0x%04X INGORED", n, address);
     } else if (address >= 0xFF00 && address <= 0xFF7F) {
         // I/O registers
         memory[address] = n;
         // Optionally handle LCDC, STAT, SCY, SCX, etc. here
-        printf("Writing 0x%02X to special location at 0x%04X ignored\n", n, address);
+		log_event(LOG_ERROR, LOG_MMU, "Attempt to write 0x%02X to special location at 0x%04X INGORED", n, address);
     } else if (address >= 0xFF80 && address <= 0xFFFE) {
         // HRAM
         memory[address] = n;

@@ -3,7 +3,6 @@
 
 #include "cpu.h"
 #include "decoder.h"
-#include "mmu.h"
 
 #include <stdio.h>
 
@@ -18,6 +17,9 @@
 // 			// big error
 // 	}
 // };
+
+// Temp global MMU reference
+MMU_t *mmu;
 
 void printRegState() {
 	printf("----------------------------------- \n");  
@@ -38,9 +40,16 @@ void printRegState() {
 	printf("----------------------------------- \n");  
 }
 
-void initCPU() {
+void initCPU(MMU_t *mmup) {
 	regs.pc = 0x0000;
 	regs.sp = 0xFFFE;
+	
+	if (!mmup) {
+		fprintf(stderr, "[ERROR__initCPU()] mmu pointer is NULL\n");
+	}
+	mmu = mmup;
+	
+	fprintf(stderr, "[INFO__initCPU()] mmu pointer is %p\n", mmu);
 }
 
 // opcode decoder
@@ -201,7 +210,7 @@ void DEC_16(uint16_t *nn) {
 
 void STR(uint16_t address) {
 	// made up instruction that makes more sense to me
-	setByte(regs.a, address);
+	setByte(mmu, regs.a, address);
 }
 
 void LD(uint8_t *r1, uint8_t *r2) {
@@ -224,9 +233,9 @@ void LDHL(int8_t n) {
 void PUSH(uint16_t nn) {
 	printf("Saving 0x%.4X to the stack in chunks: 0x%.2X 0x%.2X\n", nn, (uint8_t)(nn >> 8), (uint8_t)(nn));
 	regs.sp--;
-	setByte((uint8_t)(nn >> 8), regs.sp);
+	setByte(mmu, (uint8_t)(nn >> 8), regs.sp);
 	regs.sp--;
-	setByte((uint8_t)(nn), regs.sp);
+	setByte(mmu, (uint8_t)(nn), regs.sp);
 	dumpStack(7);
 }
 
@@ -249,8 +258,8 @@ void POP(uint16_t *nn) {
 
 void CALL(uint16_t nn) {
 	// push next instruction address to stack and jump to address nn
-	// setByte((uint8_t)(regs.pc >> 8), regs.sp);
-// 	setByte((uint8_t)(regs.pc), regs.sp - 1);
+	// setByte(mmu, (uint8_t)(regs.pc >> 8), regs.sp);
+// 	setByte(mmu, (uint8_t)(regs.pc), regs.sp - 1);
 // 	regs.sp -= 2;
 	PUSH(regs.pc);
 	regs.pc = nn;

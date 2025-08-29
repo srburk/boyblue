@@ -5,6 +5,7 @@
 #include "src/mmu.h"
 #include "src/gpu.h"
 #include "src/constants.h"
+#include "src/log.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,17 +30,19 @@ void setupSDL() {
     }
 }
 
-int main() {
+int main() {	
+
+	set_logs(LOG_MMU);
+
+	setupSDL();
+	GPU_t *gpu = create_gpu(renderer);
+	MMU_t *mmu = create_MMU(gpu);
 	
-	initCPU();
-	initMMU();
+	initCPU(mmu);
 	
 	loadFileToMemory("../dmg_boot.bin", 0x0);
 	loadFileToMemory("../logo.gb", 0x0104);
 	dumpMemoryToFile("initial.bin", 0x0, 0xFFFF);
-
-	setupSDL();
-	GPU_t *gpu = create_gpu(renderer);
 	
 // 	loadRomFile("cpu_instrs.gb");
 		

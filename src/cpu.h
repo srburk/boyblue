@@ -5,6 +5,9 @@
 #define CPU_H_INCLUDED
 
 #include <stdint.h> 
+#include "mmu.h"
+
+extern MMU_t *mmu; // TODO: Fix
 
 typedef struct {
 	union {
@@ -66,7 +69,7 @@ typedef enum { // nz if zero = 0, z if zero = 1, nc if c = 0, c if c = 1
 
 Registers regs;
 
-void initCPU();
+void initCPU(MMU_t *mmu);
 
 void printRegState();
 

@@ -13,6 +13,7 @@ set(SOURCES
     src/decoder.c
     src/mmu.c
     src/gpu.c
+    src/log.c
 )
 
 add_subdirectory(libs/SDL EXCLUDE_FROM_ALL)

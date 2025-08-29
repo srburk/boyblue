@@ -7,6 +7,8 @@
 #include "cpu.h"
 #include "mmu.h"
 
+extern MMU_t *mmu;
+
 uint8_t getNextOperand() {
 	// get next operand 
 	// TODO: Increment PC?
@@ -426,7 +428,7 @@ int decode(uint8_t opcode) {
 				switch (opcode & 0x0F) {
 					case 0x0: JR_CC(NC, getNextOperand()); break;
 					case 0x1: regs.sp = getNextLargeOperand(); break;
-					case 0x2: setByte(regs.a, regs.hl); regs.hl -= 1; break;
+					case 0x2: setByte(mmu, regs.a, regs.hl); regs.hl -= 1; break;
 					case 0x3: INC_16(&regs.sp); break;
 					case 0x4: INC(getByte(regs.hl)); break;
 					case 0x5: DEC(getByte(regs.hl)); break;
@@ -644,9 +646,9 @@ int decode(uint8_t opcode) {
 				break;
 			case 0xE0:
 				switch (opcode & 0x0F) {
-					case 0x0: setByte(regs.a, 0xFF00 + getNextOperand()); break;
+					case 0x0: setByte(mmu, regs.a, 0xFF00 + getNextOperand()); break;
 					case 0x1: POP(&regs.hl); break;
-					case 0x2: setByte(regs.a, 0xFF00 + regs.c); break;
+					case 0x2: setByte(mmu, regs.a, 0xFF00 + regs.c); break;
 					case 0x3: printf("Sub-case 0xE3\n"); break;
 					case 0x4: printf("Sub-case 0xE4\n"); break;
 					case 0x5: PUSH(regs.hl); break;
