@@ -4,7 +4,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-static uint8_t log_enabled_mask = 0x00; // all off by default
+static uint8_t log_enabled_mask = 0xFF; // all on by default
+static uint8_t log_levels_enabled = LOG_ERROR; // only error by default
 
 static const char* get_subsystem_label(LogSubsystem_t subsystem) {
     switch (subsystem) {
@@ -18,10 +19,17 @@ void set_logs(uint8_t log_mask) {
 	log_enabled_mask = log_mask;
 }
 
+void set_log_level(uint8_t log_mask) {
+	log_levels_enabled = log_mask;
+}
+
 void log_event(LogLevel_t level, LogSubsystem_t subsystem, const char *fmt, ...) {
 
 	// check if subsystem is enabled
 	if (!(log_enabled_mask & subsystem)) return;
+	
+	// check if log level is enabled
+	if (!(log_levels_enabled & level)) return;
 
 	FILE *fp = NULL;
 		

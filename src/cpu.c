@@ -3,6 +3,7 @@
 
 #include "cpu.h"
 #include "decoder.h"
+#include "log.h"
 
 #include <stdio.h>
 
@@ -45,11 +46,9 @@ void initCPU(MMU_t *mmup) {
 	regs.sp = 0xFFFE;
 	
 	if (!mmup) {
-		fprintf(stderr, "[ERROR__initCPU()] mmu pointer is NULL\n");
+		log_event(LOG_ERROR, LOG_CPU, "mmu pointer is NULL\n");
 	}
 	mmu = mmup;
-	
-	fprintf(stderr, "[INFO__initCPU()] mmu pointer is %p\n", mmu);
 }
 
 // opcode decoder
@@ -231,7 +230,6 @@ void LDHL(int8_t n) {
 // STACK Manipulation
 
 void PUSH(uint16_t nn) {
-	printf("Saving 0x%.4X to the stack in chunks: 0x%.2X 0x%.2X\n", nn, (uint8_t)(nn >> 8), (uint8_t)(nn));
 	regs.sp--;
 	setByte(mmu, (uint8_t)(nn >> 8), regs.sp);
 	regs.sp--;
