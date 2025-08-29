@@ -12,8 +12,6 @@
 
 #include <SDL3/SDL.h>
 
-#define MAX_TEST_CYCLES 100000
-
 SDL_Window *window;
 SDL_Renderer *renderer;
 SDL_Surface *surface;
@@ -33,25 +31,28 @@ void setupSDL() {
 int main() {	
 
 	set_log_level(LOG_ERROR | LOG_TRACE | LOG_INFO);
+// 	set_log_level(LOG_ERROR | LOG_INFO);
+// 	set_log_subsystems(LOG_CPU);
 
 	setupSDL();
-	GPU_t *gpu = create_gpu(renderer);
-	MMU_t *mmu = create_MMU(gpu);
+	MMU_t *mmu = create_MMU();
+	GPU_t *gpu = create_gpu(renderer, mmu);
 	
 	initCPU(mmu);
 	
 	loadFileToMemory("../dmg_boot.bin", 0x0);
-	loadFileToMemory("../logo.gb", 0x0104);
+	loadFileToMemory("../logo.bin", 0x0104);
 	dumpMemoryToFile("initial.bin", 0x0, 0xFFFF);
 	
 // 	loadRomFile("cpu_instrs.gb");
 		
-	int cycles = 0;
-	while (cycles < MAX_TEST_CYCLES) {
-		uint8_t opcode = *getByte(regs.pc);
+// 	int cycles = 0;
+	uint8_t opcode = *getByte(regs.pc);
+	while (opcode != 0x00) {
+		opcode = *getByte(regs.pc);
 		execute(opcode);
 		regs.pc += 1;
-		cycles++;
+// 		step_gpu(gpu);
 	}
 	
 	dumpMemoryToFile("final.bin", 0x0, 0xFFFF);

@@ -21,7 +21,7 @@ typedef enum {
 	LOG_INFO  = 1 << 2,
 } LogLevel_t;
 
-// void set_logs(uint8_t log_mask);
+void set_log_subsystems(uint8_t log_mask);
 void set_log_level(uint8_t log_mask);
 void log_event(LogLevel_t level, LogSubsystem_t, const char *fmt, ...);
 

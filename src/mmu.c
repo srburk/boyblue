@@ -4,22 +4,18 @@
 #include "mmu.h"
 #include "cpu.h"
 #include "log.h"
+#include "constants.h"
 
 #include <stdio.h>
 #include <stdint.h>
 
 struct MMU_t{
-	GPU_t *gpu;
+	// GPU_t *gpu;
 };
 
-MMU_t *create_MMU(GPU_t *gpu) {
-	if (!gpu) {
-		log_event(LOG_ERROR, LOG_MMU, "gpu pointer is NULL");
-		return NULL;
-	}
+MMU_t *create_MMU() {
 	MMU_t *mmu = malloc(sizeof(MMU_t));
 	if (!mmu) return NULL;
-	mmu->gpu = gpu;
 	return mmu;
 }
 
@@ -54,7 +50,7 @@ void loadFileToMemory(const char *filename, uint16_t start) {
     
     if (read_bytes != (size_t)file_size) {
         if (feof(fp)) {
-			log_event( LOG_ERROR, LOG_MMU, "Unexpected end of file for file %s ", filename);
+			log_event(LOG_ERROR, LOG_MMU, "Unexpected end of file for file %s ", filename);
         }
         else if (ferror(fp)) {
 			log_event(LOG_ERROR, LOG_MMU, "Failed to read file %s ", filename);
@@ -103,13 +99,20 @@ uint8_t* getByte(uint16_t address) {
 }
 
 void setByte(MMU_t *mmu, uint8_t n, uint16_t address) {
+
+	uint8_t initial = memory[address];
+	
+	
+// 	TEMP
+	memory[FY_REG] = 0x90;
+
     if (address <= 0x7FFF) {
         // ROM
         log_event(LOG_ERROR, LOG_MMU, "Attempt to write 0x%02X to ROM at 0x%04X INGORED", n, address);
-        return;
-    } else if (address >= 0x8000 && address <= 0x9FFF) {
+    } else if (address >= VRAM_START && address <= VRAM_END) {
         // VRAM
-		write_vram(mmu->gpu, n, address);
+        log_event(LOG_INFO, LOG_MMU, "Wrote 0x%02X to VRAM", n);
+        memory[address] = n;
     } else if (address >= 0xA000 && address <= 0xBFFF) {
         // External RAM
         memory[address] = n;
@@ -130,7 +133,15 @@ void setByte(MMU_t *mmu, uint8_t n, uint16_t address) {
         // I/O registers
         memory[address] = n;
         // Optionally handle LCDC, STAT, SCY, SCX, etc. here
-		log_event(LOG_ERROR, LOG_MMU, "Attempt to write 0x%02X to special location at 0x%04X INGORED", n, address);
+		// log_event(LOG_ERROR, LOG_MMU, "Attempt to write 0x%02X to special location at 0x%04X INGORED", n, address);
+        
+        switch (address) {
+        	case LCD_CONTROL_ADDR:
+        		log_event(LOG_INFO, LOG_MMU, "Wrote to LCDC register: 0x%02X", memory[LCD_CONTROL_ADDR]);
+        		break;
+        	default:
+	        	break;
+        }
     } else if (address >= 0xFF80 && address <= 0xFFFE) {
         // HRAM
         memory[address] = n;
@@ -138,4 +149,10 @@ void setByte(MMU_t *mmu, uint8_t n, uint16_t address) {
         // Interrupt Enable
         memory[address] = n;
     }
+    
+    if (!(address >= VRAM_START && address <= VRAM_END)) {
+		log_event(LOG_TRACE, LOG_MMU, "\t Changed memory location 0x%04X from 0x%02X to 0x%02X", address, initial, n);
+	} else {
+		log_event(LOG_TRACE, LOG_MMU, "\t Changed VRAM location 0x%04X from 0x%02X to 0x%02X", address, initial, n);
+	}
 }

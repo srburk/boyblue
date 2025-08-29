@@ -5,6 +5,7 @@
 #include "decoder.h"
 #include "log.h"
 
+#include <string.h>
 #include <stdio.h>
 
 // static uint16_t * reg_id_ptr(RegID reg_id) {
@@ -21,6 +22,45 @@
 
 // Temp global MMU reference
 MMU_t *mmu;
+
+// TRACER =================================================
+
+static Registers_t *lastRegisterState;
+
+static void captureState() {
+	*lastRegisterState = regs;
+	
+	// 2. get flags
+	// 3. get memory changes from a buffer that's triggered from the memory bus (we can intercept mmu requests with a callback or something)
+	// 4. compare with some algorithm and output in meaningful format
+}
+
+static void outputTrace() { 
+
+	char buf[256];
+	int offset = 0;
+
+	#define APPEND_REG_CHANGE(reg) \
+		if (lastRegisterState->reg != regs.reg) { \
+			offset += snprintf(buf + offset, sizeof(buf) - offset, " " #reg ": 0x%.2X -> 0x%.2X", lastRegisterState->reg, regs.reg); \		
+		} \
+	
+	APPEND_REG_CHANGE(a);
+	APPEND_REG_CHANGE(b);
+	APPEND_REG_CHANGE(c);
+	APPEND_REG_CHANGE(d);
+	APPEND_REG_CHANGE(e);
+	APPEND_REG_CHANGE(h);
+	APPEND_REG_CHANGE(l);
+	APPEND_REG_CHANGE(sp);
+	
+	if (offset > 0) {
+    	log_event(LOG_TRACE, LOG_CPU, "\t %s", buf);
+	}
+    		
+}
+
+// ========================================================
 
 void printRegState() {
 	printf("----------------------------------- \n");  
@@ -45,6 +85,8 @@ void initCPU(MMU_t *mmup) {
 	regs.pc = 0x0000;
 	regs.sp = 0xFFFE;
 	
+	lastRegisterState = malloc(sizeof(Registers_t));
+	
 	if (!mmup) {
 		log_event(LOG_ERROR, LOG_CPU, "mmu pointer is NULL\n");
 	}
@@ -53,8 +95,10 @@ void initCPU(MMU_t *mmup) {
 
 // opcode decoder
 int execute(uint8_t opcode) {
+	captureState();
 	decode(opcode);
 // 	printRegState();
+	outputTrace();
 }
 
 // instruction primitives:
@@ -62,9 +106,7 @@ int execute(uint8_t opcode) {
 // ADD:
 
 static void ADD_updateFlags(uint8_t *initial_dest) {
-	if (regs.a == 0) {
-		SET_FLAG(ZERO, 1);
-	}
+	SET_FLAG(ZERO, (regs.a == 0));
 	SET_FLAG(SUBTRACT, 0);
 	SET_FLAG(CARRY, (regs.a < *initial_dest));
 	SET_FLAG(HALF, (*initial_dest < 0x10 && regs.a >= 0x10));
@@ -107,10 +149,8 @@ void ADC(uint8_t *n) {
 	ADD_updateFlags(&initial_dest);
 }
 
-static void SUB_updateFlags(uint8_t *initial, uint8_t *n) {
-	if (regs.a == 0) {
-		SET_FLAG(ZERO, 1);
-	}
+static void SUB_updateFlags(uint8_t *initial, uint8_t *n) {	
+	SET_FLAG(ZERO, (regs.a == 0));
 	SET_FLAG(SUBTRACT, 1);
 	SET_FLAG(CARRY, (*initial < *n));
 	SET_FLAG(HALF, ((*initial & 0x0f) < (*n < 0x0f))); //TODO: FIX THIS
@@ -133,9 +173,7 @@ void SBC(uint8_t *n) {
 // BITWISE:
 
 static void BITWISE_updateFlags() {
-	if (regs.a == 0) {
-		SET_FLAG(ZERO, 1);
-	}
+	SET_FLAG(ZERO, (regs.a == 0));
 	SET_FLAG(SUBTRACT, 0);
 	// HALF IS DIFFERENT SOMETIMES
 	SET_FLAG(CARRY, 0);
@@ -163,12 +201,10 @@ void XOR(uint8_t *n) {
 }
 
 void CP(uint8_t *n) {
-	// compare a with n
-	if (regs.a == *n) {
-		SET_FLAG(ZERO, 1);
-	}
+	// compare a with n	
+	SET_FLAG(ZERO, (regs.a == *n));
 	SET_FLAG(SUBTRACT, 1);
-	SET_FLAG(HALF, ((regs.a & 0x0f) < (*n < 0x0f))); //TODO: FIX THIS
+	SET_FLAG(HALF, ((regs.a & 0x0F) < (*n < 0x0F))); //TODO: FIX THIS
 	SET_FLAG(CARRY, (regs.a < *n));
 }
 
@@ -194,9 +230,8 @@ void DEC(uint8_t *n) {
 	// decrement register n
 	uint8_t initial = *n;
 	*n -= 1;
-	if (*n == 0) {
-		SET_FLAG(ZERO, 1);
-	}
+	
+	SET_FLAG(ZERO, (*n == 0));
 	SET_FLAG(SUBTRACT, 1);
 	SET_FLAG(HALF, ((initial & 0x0f) < (*n < 0x0f))); //TODO: FIX THIS
 }
@@ -234,7 +269,7 @@ void PUSH(uint16_t nn) {
 	setByte(mmu, (uint8_t)(nn >> 8), regs.sp);
 	regs.sp--;
 	setByte(mmu, (uint8_t)(nn), regs.sp);
-	dumpStack(7);
+// 	dumpStack(7);
 }
 
 static uint16_t POP_PRIM() {
@@ -250,8 +285,7 @@ void POP(uint16_t *nn) {
 	uint16_t value = POP_PRIM();
 // 	uint16_t* reg_ptr = reg_id_ptr(reg_id);
 	*nn = value;
-		
-	dumpStack(7);
+// 	dumpStack(7);
 }
 
 void CALL(uint16_t nn) {
@@ -260,7 +294,7 @@ void CALL(uint16_t nn) {
 // 	setByte(mmu, (uint8_t)(regs.pc), regs.sp - 1);
 // 	regs.sp -= 2;
 	PUSH(regs.pc);
-	regs.pc = nn;
+	regs.pc = nn - 1;
 }
 
 void CALL_CC(CC cc, uint16_t nn) {

@@ -16,4 +16,7 @@
 #define VRAM_END 0x9FFF
 #define VRAM_SIZE (VRAM_END - VRAM_START + 1)
 
+#define LCD_CONTROL_ADDR 	0xFF40
+#define FY_REG				0xFF44
+
 #endif

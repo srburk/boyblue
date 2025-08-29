@@ -22,7 +22,7 @@ typedef struct {
 		};
 	};
 	uint16_t sp, pc;
-} Registers;
+} Registers_t;
 
 typedef enum {
 	AF, BC, DE, HL, SP
@@ -61,13 +61,13 @@ typedef enum { // nz if zero = 0, z if zero = 1, nc if c = 0, c if c = 1
 
 // FLAG MACROS
 #define GET_FLAG(x) ((regs.f & (1 << x)) >> x)
-#define SET_FLAG(x, n) (n) ? (regs.f |= (1 << (x))) : (regs.f &= ~(1 << (x))) // set flag x in F to n
+#define SET_FLAG(x, n) n ? (regs.f |= (1 << (x))) : (regs.f &= ~(1 << (x))) // set flag x in F to n
 #define CARRY 4
 #define ZERO 7
 #define HALF 5
 #define SUBTRACT 6
 
-Registers regs;
+Registers_t regs;
 
 void initCPU(MMU_t *mmu);
 

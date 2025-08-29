@@ -4,14 +4,12 @@
 #ifndef MMU_H_INCLUDED
 #define MMU_H_INCLUDED
 
-#include "gpu.h"
-
 #include <stdint.h>
 #include <stdlib.h>
 
 typedef struct MMU_t MMU_t;
 
-MMU_t *create_MMU(GPU_t *gpu);
+MMU_t *create_MMU();
 
 static uint8_t memory[0xFFFF];
 

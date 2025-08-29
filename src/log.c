@@ -9,13 +9,14 @@ static uint8_t log_levels_enabled = LOG_ERROR; // only error by default
 
 static const char* get_subsystem_label(LogSubsystem_t subsystem) {
     switch (subsystem) {
-        case LOG_CPU:   return "CPU";
-        case LOG_MMU:   return "MMU";
-        case LOG_GPU:   return "GPU";
-        default:        return "DEFAULT";
+        case LOG_CPU:   	return "CPU";
+        case LOG_MMU:   	return "MMU";
+        case LOG_GPU:   	return "GPU";
+        case LOG_DECODER:	return "DEC";
+        default:        	return "DEFAULT";
     }
 }
-void set_logs(uint8_t log_mask) {
+void set_log_subsystems(uint8_t log_mask) {
 	log_enabled_mask = log_mask;
 }
 

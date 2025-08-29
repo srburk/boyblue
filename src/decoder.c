@@ -14,7 +14,7 @@ uint8_t getNextOperand() {
 	// get next operand 
 	// TODO: Increment PC?
 	regs.pc += 1;
-// 	printf("Next requested operand is: 0x%.2X \n", *getByte(regs.pc));
+	log_event(LOG_TRACE, LOG_DECODER, "\tNext requested operand is: 0x%.2X", *getByte(regs.pc));
 	return *getByte(regs.pc);
 }
 
@@ -25,7 +25,7 @@ uint16_t getNextLargeOperand() {
     regs.pc += 1;
     uint8_t high = *getByte(regs.pc);
     value = low | (high << 8);  
-// 	printf("Next requested operand is: 0x%.4X at addresses 0x%.2X and 0x%.2X \n", value, regs.pc - 2, regs.pc - 1);
+	log_event(LOG_TRACE, LOG_DECODER, "\tNext requested operand is: 0x%.4X at addresses 0x%.2X and 0x%.2X", value, regs.pc - 2, regs.pc - 1);
 	return value;
 }
 
@@ -37,7 +37,7 @@ int decode(uint8_t opcode) {
 		regs.pc++;
 		opcode = *getByte(regs.pc);
 		
-// 		printf("Opcode: 0xCB%x \n", opcode);
+		log_event(LOG_TRACE, LOG_DECODER, "PC = 0x%.2X, Opcode is 0xCB%.2X", regs.pc, opcode);
 		
 		switch (opcode & 0xF0) {
 			case 0x00:
@@ -362,12 +362,14 @@ int decode(uint8_t opcode) {
 			}
 	} else {
 		
+		log_event(LOG_TRACE, LOG_DECODER, "PC = 0x%.2X, Opcode is 0x%.2X", regs.pc, opcode);
+	
 		switch (opcode & 0xF0) { // match higher level
 			case 0x00:
 				switch (opcode & 0x0F) {
 					case 0x0: printf("NOP\n"); break;
 					case 0x1: regs.bc = getNextLargeOperand(); break;
-					case 0x2: STR(regs.bc); break;
+					case 0x2: setByte(mmu, regs.a, regs.bc); break;
 					case 0x3: INC_16(&regs.bc); break;
 					case 0x4: INC(&regs.b); break;
 					case 0x5: DEC(&regs.b); break;
@@ -387,7 +389,7 @@ int decode(uint8_t opcode) {
 				switch (opcode & 0x0F) {
 					case 0x0: printf("Sub-case 0x10\n"); break;
 					case 0x1: regs.de = getNextLargeOperand(); break;
-					case 0x2: STR(regs.de); break;
+					case 0x2: setByte(mmu, regs.a, regs.de); break;
 					case 0x3: INC_16(&regs.de); break;
 					case 0x4: INC(&regs.d); break;
 					case 0x5: DEC(&regs.d); break;
@@ -407,7 +409,7 @@ int decode(uint8_t opcode) {
 				switch (opcode & 0x0F) {
 					case 0x0: JR_CC(NZ, getNextOperand()); break;
 					case 0x1: regs.hl = getNextLargeOperand(); break;
-					case 0x2: LD(getByte(regs.hl), &regs.a); regs.hl += 1; break;
+					case 0x2: setByte(mmu, regs.a, regs.hl); regs.hl += 1; break;
 					case 0x3: INC_16(&regs.hl); break;
 					case 0x4: INC(&regs.h); break;
 					case 0x5: DEC(&regs.h); break;
@@ -431,7 +433,7 @@ int decode(uint8_t opcode) {
 					case 0x3: INC_16(&regs.sp); break;
 					case 0x4: INC(getByte(regs.hl)); break;
 					case 0x5: DEC(getByte(regs.hl)); break;
-					case 0x6: printf("Sub-case 0x36\n"); break;
+					case 0x6: setByte(mmu, getNextOperand(), regs.hl); break;
 					case 0x7: printf("Sub-case 0x37\n"); break;
 					case 0x8: JR_CC(C, getNextOperand()); break;
 					case 0x9: ADD_HL(regs.sp); break;
@@ -505,14 +507,14 @@ int decode(uint8_t opcode) {
 				break;
 			case 0x70:
 				switch (opcode & 0x0F) {
-					case 0x0: LD(getByte(regs.hl), &regs.b); break;
-					case 0x1: LD(getByte(regs.hl), &regs.c); break;
-					case 0x2: LD(getByte(regs.hl), &regs.d); break;
-					case 0x3: LD(getByte(regs.hl), &regs.e); break;
-					case 0x4: LD(getByte(regs.hl), &regs.h); break;
-					case 0x5: LD(getByte(regs.hl), &regs.l); break;
+					case 0x0: setByte(mmu, regs.b, regs.hl); break;
+					case 0x1: setByte(mmu, regs.c, regs.hl); break;
+					case 0x2: setByte(mmu, regs.d, regs.hl); break;
+					case 0x3: setByte(mmu, regs.e, regs.hl); break;
+					case 0x4: setByte(mmu, regs.h, regs.hl); break;
+					case 0x5: setByte(mmu, regs.l, regs.hl); break;
 					case 0x6: printf("Sub-case 0x76\n"); break;
-					case 0x7: LD(getByte(regs.hl), &regs.a); break;
+					case 0x7: setByte(mmu, regs.a, regs.hl); break;
 					case 0x8: LD(&regs.a, &regs.b); break;
 					case 0x9: LD(&regs.a, &regs.c); break;
 					case 0xA: LD(&regs.a, &regs.d); break;
@@ -531,7 +533,7 @@ int decode(uint8_t opcode) {
 					case 0x3: ADD(&regs.e); break;
 					case 0x4: ADD(&regs.h); break;
 					case 0x5: ADD(&regs.l); break;
-					case 0x6: ADD(getByte(regs.hl)); break;
+					case 0x6: log_event(LOG_TRACE, LOG_DECODER, "Adding from HL (0x%.2X) location (0x%.2X) to A (intitial = 0x%.2X)", regs.hl, *getByte(regs.hl), regs.a); ADD(getByte(regs.hl)); log_event(LOG_TRACE, LOG_DECODER, "After of A = 0x%.2X)", regs.a); break;
 					case 0x7: ADD(&regs.a); break;
 					case 0x8: ADC(&regs.b); break;
 					case 0x9: ADC(&regs.c); break;
@@ -599,7 +601,7 @@ int decode(uint8_t opcode) {
 					case 0xB: CP(&regs.e); break;
 					case 0xC: CP(&regs.h); break;
 					case 0xD: CP(&regs.l); break;
-					case 0xE: CP(getByte(regs.hl)); break;
+					case 0xE: immediate8 = *getByte(regs.hl); log_event(LOG_TRACE, LOG_DECODER, "\tComparing A 0x%.2X with (HL=0x%.2X) 0x%.2X", regs.a, regs.hl, immediate8); CP(&immediate8); break;
 					case 0xF: CP(&regs.a); break;
 				}
 				break;
@@ -655,7 +657,7 @@ int decode(uint8_t opcode) {
 					case 0x7: printf("Sub-case 0xE7\n"); break;
 					case 0x8: ADD_SP(getNextOperand()); break;
 					case 0x9: JP(regs.hl); break;
-					case 0xA: LD(getByte(getNextOperand()), &regs.a); break;
+					case 0xA: setByte(mmu, regs.a, getNextLargeOperand()); break;
 					case 0xB: printf("Sub-case 0xEB\n"); break;
 					case 0xC: printf("Sub-case 0xEC\n"); break;
 					case 0xD: printf("Sub-case 0xED\n"); break;
@@ -665,17 +667,17 @@ int decode(uint8_t opcode) {
 				break;
 			case 0xF0:
 				switch (opcode & 0x0F) {
-					case 0x0: STR(*getByte(0xFF00 + getNextOperand())); break;
+					case 0x0: regs.a = *getByte(0xFF00 + getNextOperand()); break;
 					case 0x1: POP(&regs.af); break;
 					case 0x2: STR(*getByte(0xFF00 + regs.c)); break;
-					case 0x3: printf("Sub-case 0xF3\n"); break;
+					case 0x3: log_event(LOG_ERROR, LOG_DECODER, "UNIMPLEMENTED: Opcode 0xF3\n"); break;
 					case 0x4: printf("Sub-case 0xF4\n"); break;
 					case 0x5: PUSH(regs.af); break;
 					case 0x6: immediate8 = getNextOperand(); OR(&immediate8);; break;
 					case 0x7: printf("Sub-case 0xF7\n"); break;
 					case 0x8: LDHL(getNextOperand()); break;
 					case 0x9: regs.sp = regs.hl; break;
-					case 0xA: LD(&regs.a, getByte(getNextLargeOperand())); break;
+					case 0xA: regs.a = *getByte(getNextLargeOperand()); break;
 					case 0xB: printf("Sub-case 0xFB\n"); break;
 					case 0xC: printf("Sub-case 0xFC\n"); break;
 					case 0xD: printf("Sub-case 0xFD\n"); break;
