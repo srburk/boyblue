@@ -39,14 +39,12 @@ void printRegState() {
 }
 
 void initCPU() {
-	regs.pc = 0x0100;
+	regs.pc = 0x0000;
 	regs.sp = 0xFFFE;
 }
 
 // opcode decoder
 int execute(uint8_t opcode) {
-
-// 	printf("Opcode: 0x%x \n", opcode);
 	decode(opcode);
 // 	printRegState();
 }
@@ -224,8 +222,11 @@ void LDHL(int8_t n) {
 // STACK Manipulation
 
 void PUSH(uint16_t nn) {
-	setByte((uint8_t)(nn >> 8), regs.sp--);
-	setByte((uint8_t)(nn), regs.sp--);
+	printf("Saving 0x%.4X to the stack in chunks: 0x%.2X 0x%.2X\n", nn, (uint8_t)(nn >> 8), (uint8_t)(nn));
+	regs.sp--;
+	setByte((uint8_t)(nn >> 8), regs.sp);
+	regs.sp--;
+	setByte((uint8_t)(nn), regs.sp);
 	dumpStack(7);
 }
 
@@ -248,12 +249,11 @@ void POP(uint16_t *nn) {
 
 void CALL(uint16_t nn) {
 	// push next instruction address to stack and jump to address nn
-	printf("Saving 0x%.4X to the stack in chunks: 0x%.2X 0x%.2X\n", regs.pc, (uint8_t)(regs.pc >> 8), (uint8_t)(regs.pc));
-	setByte((uint8_t)(regs.pc >> 8), regs.sp);
-	setByte((uint8_t)(regs.pc), regs.sp - 1);
-	regs.sp -= 2;
+	// setByte((uint8_t)(regs.pc >> 8), regs.sp);
+// 	setByte((uint8_t)(regs.pc), regs.sp - 1);
+// 	regs.sp -= 2;
+	PUSH(regs.pc);
 	regs.pc = nn;
-	dumpStack(7);
 }
 
 void CALL_CC(CC cc, uint16_t nn) {
@@ -328,22 +328,32 @@ static void SHIFT_updateFlags(uint8_t* n) {
 	SET_FLAG(HALF, 0);
 }
 
-void RLCA() {
-	// rotate A left old bit 7 becomes carry flag 
-	uint8_t msb = regs.a >> 7; // get MSB
-	regs.a = regs.a << 1;
-	regs.a += msb;
+void RLC(uint8_t* n) {
+	// rotate reg left old bit 7 becomes carry flag 
+	uint8_t msb = *n >> 7; // get MSB
+	*n = *n << 1;
+	*n += msb;
 	SET_FLAG(CARRY, msb);
-	SHIFT_updateFlags(&regs.a);
+	SHIFT_updateFlags(n);
 }
-void RLA() {
-	// rotate A left through carry flag
-	uint8_t msb = regs.a >> 7; // get MSB
-	regs.a = regs.a << 1;
-	regs.a += GET_FLAG(CARRY);
-	SET_FLAG(CARRY, msb);
-	SHIFT_updateFlags(&regs.a);
-}
+
+// void RLCA() {
+// 	// rotate A left old bit 7 becomes carry flag 
+// 	uint8_t msb = regs.a >> 7; // get MSB
+// 	regs.a = regs.a << 1;
+// 	regs.a += msb;
+// 	SET_FLAG(CARRY, msb);
+// 	SHIFT_updateFlags(&regs.a);
+// }
+
+// void RLA() {
+// 	// rotate A left through carry flag
+// 	uint8_t msb = regs.a >> 7; // get MSB
+// 	regs.a = regs.a << 1;
+// 	regs.a += GET_FLAG(CARRY);
+// 	SET_FLAG(CARRY, msb);
+// 	SHIFT_updateFlags(&regs.a);
+// }
 
 void RRCA() {
 	// rotate A right old bit 0 becomes carry flag 
@@ -384,6 +394,12 @@ void SRL(uint8_t* n) {
 	SHIFT_updateFlags(n);
 }
 
+void BIT(uint8_t b, uint8_t n) {
+	// test bit b of n, set Z if bit b of n is 0
+	SET_FLAG(ZERO, !((n >> b) & 1));
+	SET_FLAG(SUBTRACT, 0);
+	SET_FLAG(HALF, 1);
+}
 
 
 

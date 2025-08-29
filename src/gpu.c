@@ -69,6 +69,9 @@ void render_tile(GPU_t *gpu) {
 }
 
 void write_vram(GPU_t* gpu, uint8_t n, uint16_t address) {
+
+	printf("WRITING TO VRAM\n");
+
 	gpu->vram[address] = n;
 	
 	if (address >= 0x1800) { return; } // return if not tile set data

@@ -11,7 +11,7 @@
 
 #include <SDL3/SDL.h>
 
-#define MAX_TEST_CYCLES 30
+#define MAX_TEST_CYCLES 100000
 
 SDL_Window *window;
 SDL_Renderer *renderer;
@@ -33,45 +33,48 @@ int main() {
 	
 	initCPU();
 	initMMU();
-		
+	
+	loadFileToMemory("../dmg_boot.bin", 0x0);
+	loadFileToMemory("../logo.gb", 0x0104);
+	dumpMemoryToFile("initial.bin", 0x0, 0xFFFF);
+
 	setupSDL();
 	GPU_t *gpu = create_gpu(renderer);
 	
 // 	loadRomFile("cpu_instrs.gb");
 		
 	int cycles = 0;
-	
-	uint32_t lastTime = SDL_GetTicks();
-	
-	while (1) {
-        SDL_PollEvent(&event);
-        if (event.type == SDL_EVENT_QUIT) {
-            break;
-        }
-        
-        uint32_t currentTime = SDL_GetTicks();
-		if (currentTime - lastTime >= 16) {
-			render_tile(gpu);
-        	SDL_RenderPresent(renderer);
-			lastTime = currentTime;
-		} else {
-			SDL_Delay(1); 
-		}
-    }
-
-    SDL_DestroyTexture(texture);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-
-    SDL_Quit();
-	
 	while (cycles < MAX_TEST_CYCLES) {
 		uint8_t opcode = *getByte(regs.pc);
-		printf("Opcode: 0x%.2X\n", opcode);
 		execute(opcode);
 		regs.pc += 1;
 		cycles++;
 	}
+	
+	dumpMemoryToFile("final.bin", 0x0, 0xFFFF);
+	
+	// uint32_t lastTime = SDL_GetTicks();
+// 	while (1) {
+//         SDL_PollEvent(&event);
+//         if (event.type == SDL_EVENT_QUIT) {
+//             break;
+//         }
+//         
+//         uint32_t currentTime = SDL_GetTicks();
+// 		if (currentTime - lastTime >= 16) {
+// 			render_tile(gpu);
+//         	SDL_RenderPresent(renderer);
+// 			lastTime = currentTime;
+// 		} else {
+// 			SDL_Delay(1); 
+// 		}
+//     }
+// 
+//     SDL_DestroyTexture(texture);
+//     SDL_DestroyRenderer(renderer);
+//     SDL_DestroyWindow(window);
+// 
+//     SDL_Quit();
 	
 	return 0;
 	

@@ -118,12 +118,16 @@ void JR(int8_t n);
 void JR_CC(CC cc, int8_t n);
 
 // rotates and shifts
-void RLCA();
-void RLA();
+void RLC(uint8_t* n);
+// void RLA();
 void RRCA();
 void RRA();
 void SLA(uint8_t* n);
 void SRA(uint8_t* n);
 void SRL(uint8_t* n);
+
+// bit test
+void BIT(uint8_t b, uint8_t n);
+
 
 #endif

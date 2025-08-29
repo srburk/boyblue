@@ -18,7 +18,7 @@ void loadMemory(uint8_t *ptr, uint16_t size, uint16_t start) {
 	}
 }
 
-void loadRomFile(const char *filename) {
+void loadFileToMemory(const char *filename, uint16_t start) {
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
         fprintf(stderr, "Failed to open ROM: %s\n", filename);
@@ -38,7 +38,7 @@ void loadRomFile(const char *filename) {
     
     printf("Size is %ld bytes...\n", file_size);
 
-    const size_t read_bytes = fread(memory, sizeof memory[0], (size_t)file_size, fp);
+    const size_t read_bytes = fread(memory + start, sizeof memory[0], (size_t)file_size, fp);
     
     if (read_bytes != (size_t)file_size) {
         if (feof(fp))
@@ -89,6 +89,41 @@ uint8_t* getByte(uint16_t address) {
 }
 
 void setByte(uint8_t n, uint16_t address) {
-	// check memory map here
-	memory[address] = n;
+	printf("Writing 0x%02X to 0x%04X\n", n, address);
+    if (address <= 0x7FFF) {
+        // ROM
+        printf("Attempt to write 0x%02X to ROM at 0x%04X ignored\n", n, address);
+        return;
+    } else if (address >= 0x8000 && address <= 0x9FFF) {
+        // VRAM
+        memory[address] = n;
+		printf("VRAM WRITE Attempt to write 0x%02X at 0x%04X ignored\n", n, address);
+    } else if (address >= 0xA000 && address <= 0xBFFF) {
+        // External RAM
+        memory[address] = n;
+    } else if (address >= 0xC000 && address <= 0xDFFF) {
+        // Work RAM
+        memory[address] = n;
+    } else if (address >= 0xE000 && address <= 0xFDFF) {
+        // Echo RAM → mirror of 0xC000–0xDDFF
+        memory[address] = n;
+        memory[address - 0x2000] = n;
+    } else if (address >= 0xFE00 && address <= 0xFE9F) {
+        // OAM
+        memory[address] = n;
+    } else if (address >= 0xFEA0 && address <= 0xFEFF) {
+        // Unusable memory
+        printf("Attempt to write to unusable memory 0x%04X ignored\n", address);
+    } else if (address >= 0xFF00 && address <= 0xFF7F) {
+        // I/O registers
+        memory[address] = n;
+        // Optionally handle LCDC, STAT, SCY, SCX, etc. here
+        printf("Writing 0x%02X to special location at 0x%04X ignored\n", n, address);
+    } else if (address >= 0xFF80 && address <= 0xFFFE) {
+        // HRAM
+        memory[address] = n;
+    } else if (address == 0xFFFF) {
+        // Interrupt Enable
+        memory[address] = n;
+    }
 }
