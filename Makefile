@@ -2,7 +2,10 @@ NAME = boyblue
 CC = gcc
 C_FLAGS = -O -Wall -Wextra -Wwrite-strings -Wswitch-default
 SRCS = 	main.c src/cpu.c src/decoder.c src/mmu.c src/gpu.c
-LINKER_FLAGS = $(shell pkg-config --cflags --libs sdl2)
+
+SDL3_PATH = ~/Library/Frameworks
+
+LINKER_FLAGS = -I$(SDL3_PATH)/SDL3.xcframework/macos-arm64/SDL3.framework/Headers -F$(SDL3_PATH)/SDL3.xcframework/macos-arm64 -framework SDL3
 BUILD_DIR = ./build
 
 .PHONY: all

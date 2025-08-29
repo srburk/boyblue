@@ -1,18 +1,21 @@
 cmake_minimum_required(VERSION 3.16)
-
-# declare project
 project(boyblue)
 
-set(EXECUTABLE_NAME ${PROJECT_NAME})
-add_executable(${EXECUTABLE_NAME})
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O -Wall -Wextra -Wwrite-strings -Wswitch-default")
 
-target_sources(${EXECUTABLE_NAME}
-	PRIVATE
-	src/main.c
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
+
+set(SOURCES
+    main.c
+    src/cpu.c
+    src/decoder.c
+    src/mmu.c
+    src/gpu.c
 )
 
-# SDL building / linking
-add_subdirectory(./libs/SDL EXCLUDE_FROM_ALL)
+add_subdirectory(libs/SDL EXCLUDE_FROM_ALL)
 
-target_link_libraries(${EXECUTABLE_NAME} PUBLIC SDL3::SDL3)
-target_compile_definitions(${EXECUTABLE_NAME} PUBLIC SDL_MAIN_USE_CALLBACKS)
+add_executable(boyblue ${SOURCES})
+target_link_libraries(boyblue PRIVATE SDL3::SDL3)
