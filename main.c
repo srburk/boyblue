@@ -3,9 +3,12 @@
 
 #include "src/cpu.h"
 #include "src/mmu.h"
+#include "src/gpu.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <SDL2/SDL.h>
 
 #define MAX_TEST_CYCLES 30
 
@@ -13,6 +16,8 @@ int main() {
 	
 	initCPU();
 	initMMU();
+	
+	GPU_t *gpu = create_gpu();
 	
 // 	loadRomFile("cpu_instrs.gb");
 		
