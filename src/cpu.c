@@ -138,13 +138,12 @@ int execute(uint8_t opcode) {
 	operands.reg_dst = instruction->reg_dst;
 		
 	if (instruction->byte_length == 2) {
-		regs.pc++;
-		operands.n8 = memory[regs.pc];		
+		operands.n8 = memory[regs.pc + 1];		
 	} else if (instruction->byte_length == 3) {
 		operands.n16 = memory[regs.pc + 1] | ((uint16_t)memory[regs.pc + 2] << 8);
 	}
 	
-	log_event(LOG_TRACE, LOG_CPU, "PC = 0x%.2X | %s", regs.pc, instruction->name);
+	log_event(LOG_TRACE, LOG_CPU, "PC = 0x%.2X | Opcode = 0x%.2X | %s", regs.pc, opcode, instruction->name);
 	
 	instruction->execute(&operands);
 	
@@ -158,6 +157,208 @@ void instr_NOP(Operands_t *operands) {
 	return;
 }
 
+// ADD ===================================
+
+void instr_ADD_HL(Operands_t *operands) {
+    uint16_t initial = regs.hl;
+    uint16_t *reg_src_ptr = reg16_id_ptr(operands->reg_src);
+    uint16_t value = *reg_src_ptr;
+
+    uint32_t full = initial + value;
+    regs.hl = (uint16_t)full;
+
+    SET_FLAG(SUBTRACT, 0);
+    SET_FLAG(HALF, ((initial & 0x0FFF) + (value & 0x0FFF)) > 0x0FFF);
+    SET_FLAG(CARRY, full > 0xFFFF);
+
+    log_event(LOG_TRACE, LOG_CPU,
+              "\t HL = HL + %s from 0x%.4X -> 0x%.4X",
+              REG_NAMES[operands->reg_src], initial, regs.hl);
+}
+
+// Add location from src register in memory to A
+void instr_ADD_MEM(Operands_t *operands) {
+    uint8_t initial = regs.a;
+    uint16_t *reg_src_ptr = reg16_id_ptr(operands->reg_src);
+    uint8_t value = *getByte(*reg_src_ptr);
+
+    uint16_t full = initial + value;
+    regs.a = (uint8_t)full;
+
+    SET_FLAG(ZERO, regs.a == 0);
+    SET_FLAG(SUBTRACT, 0);
+    SET_FLAG(HALF, ((initial & 0x0F) + (value & 0x0F)) > 0x0F);
+    SET_FLAG(CARRY, full > 0xFF);
+
+    log_event(LOG_TRACE, LOG_CPU,
+              "\t A = A + (%s) from 0x%.2X -> 0x%.2X",
+              REG_NAMES[operands->reg_src], initial, regs.a);
+}
+
+// add src register to A (accumulator)
+void instr_ADD_n(Operands_t *operands) {
+    uint8_t *n_ptr = reg8_id_ptr(operands->reg_src);
+    uint8_t initial = regs.a;
+    uint8_t value = *n_ptr;
+
+    uint16_t full = initial + value;
+    regs.a = (uint8_t)full;
+
+    SET_FLAG(ZERO, regs.a == 0);
+    SET_FLAG(SUBTRACT, 0);
+    SET_FLAG(HALF, ((initial & 0x0F) + (value & 0x0F)) > 0x0F);
+    SET_FLAG(CARRY, full > 0xFF);
+
+    log_event(LOG_TRACE, LOG_CPU,
+              "\t A = A + %s from 0x%.2X -> 0x%.2X",
+              REG_NAMES[operands->reg_src], initial, regs.a);
+}
+
+// Add value from memory pointed to by reg_src into A + CARRY
+void instr_ADC_MEM(Operands_t *operands) {
+    uint8_t initial = regs.a;
+    uint16_t *reg_src_ptr = reg16_id_ptr(operands->reg_src);
+    uint8_t value = *getByte(*reg_src_ptr);  // if getByte returns uint8_t
+
+    uint8_t carry_in = GET_FLAG(CARRY);
+    uint16_t full = initial + value + carry_in; // 9-bit safe sum
+    regs.a = (uint8_t)full;
+
+    SET_FLAG(ZERO, regs.a == 0);
+    SET_FLAG(SUBTRACT, 0);
+    SET_FLAG(HALF, ((initial & 0x0F) + (value & 0x0F) + carry_in) > 0x0F);
+    SET_FLAG(CARRY, full > 0xFF);
+
+    log_event(LOG_TRACE, LOG_CPU,
+              "\t A = A + (%s) + CARRY from 0x%.2X -> 0x%.2X",
+              REG_NAMES[operands->reg_src], initial, regs.a);
+}
+
+// add src register to A (accumulator)
+void instr_ADC_n(Operands_t *operands) {
+    uint8_t *n_ptr = reg8_id_ptr(operands->reg_src);
+    uint8_t initial = regs.a;
+    uint8_t value = *n_ptr;
+    uint8_t carry_in = GET_FLAG(CARRY);
+
+    uint16_t full = initial + value + carry_in; // 9-bit safe sum
+    regs.a = (uint8_t)full;
+
+    SET_FLAG(ZERO, regs.a == 0);
+    SET_FLAG(SUBTRACT, 0);
+    SET_FLAG(HALF, ((initial & 0x0F) + (value & 0x0F) + carry_in) > 0x0F);
+    SET_FLAG(CARRY, full > 0xFF);
+
+    log_event(LOG_TRACE, LOG_CPU,
+              "\t A = A + %s + CARRY from 0x%.2X -> 0x%.2X",
+              REG_NAMES[operands->reg_src], initial, regs.a);
+}
+
+// SUB ===================================
+
+void instr_SUB_n(Operands_t *operands) {
+	uint8_t *n_ptr = reg8_id_ptr(operands->reg_src);
+	uint8_t initial = regs.a;
+	uint8_t value = *n_ptr;
+	regs.a -= value;
+	
+	SET_FLAG(ZERO, regs.a == 0);
+	SET_FLAG(SUBTRACT, 1);
+	SET_FLAG(HALF, ((initial & 0x0F) < (value & 0x0F)));
+	SET_FLAG(CARRY, (initial < value));
+	
+	log_event(LOG_TRACE, LOG_CPU, "\t A = A - %s from 0x%.2X -> 0x%.2X", REG_NAMES[operands->reg_src], initial, regs.a);
+}
+
+// Subtract value at memory location (reg16) from A
+void instr_SUB_MEM(Operands_t *operands) {
+    uint8_t initial = regs.a;
+    uint16_t *reg_src_ptr = reg16_id_ptr(operands->reg_src);
+    uint8_t value = *getByte(*reg_src_ptr);
+
+    regs.a = initial - value;
+
+    SET_FLAG(ZERO, regs.a == 0);
+    SET_FLAG(SUBTRACT, 1);
+    SET_FLAG(HALF, (initial & 0x0F) < (value & 0x0F));
+    SET_FLAG(CARRY, initial < value);
+
+    log_event(LOG_TRACE, LOG_CPU,
+              "\t A = A - (%s) from 0x%.2X -> 0x%.2X",
+              REG_NAMES[operands->reg_src], initial, regs.a);
+}
+
+// Subtract register + carry from A
+void instr_SBC_n(Operands_t *operands) {
+    uint8_t *n_ptr = reg8_id_ptr(operands->reg_src);
+    uint8_t initial = regs.a;
+    uint8_t carry = GET_FLAG(CARRY);
+    uint8_t value = *n_ptr;
+
+    regs.a = initial - value - carry;
+
+    SET_FLAG(ZERO, regs.a == 0);
+    SET_FLAG(SUBTRACT, 1);
+    SET_FLAG(HALF, (initial & 0x0F) < ((value & 0x0F) + carry));
+    SET_FLAG(CARRY, initial < (value + carry));
+
+    log_event(LOG_TRACE, LOG_CPU,
+              "\t A = A - %s - CARRY from 0x%.2X -> 0x%.2X",
+              REG_NAMES[operands->reg_src], initial, regs.a);
+}
+
+// Subtract memory value + carry from A
+void instr_SBC_MEM(Operands_t *operands) {
+    uint8_t initial = regs.a;
+    uint16_t *reg_src_ptr = reg16_id_ptr(operands->reg_src);
+    uint8_t value = *getByte(*reg_src_ptr);
+    uint8_t carry = GET_FLAG(CARRY);
+
+    regs.a = initial - value - carry;
+
+    SET_FLAG(ZERO, regs.a == 0);
+    SET_FLAG(SUBTRACT, 1);
+    SET_FLAG(HALF, (initial & 0x0F) < ((value & 0x0F) + carry));
+    SET_FLAG(CARRY, initial < (value + carry));
+
+    log_event(LOG_TRACE, LOG_CPU,
+              "\t A = A - (%s) - CARRY from 0x%.2X -> 0x%.2X",
+              REG_NAMES[operands->reg_src], initial, regs.a);
+}
+
+// STR ====================================
+
+// instructions I made up to write to memory
+
+// store n register to nn register memory address
+void instr_STR_n(Operands_t *operands) {
+	uint8_t *reg_src_ptr = reg8_id_ptr(operands->reg_src);
+	uint16_t *reg_dst_ptr = reg16_id_ptr(operands->reg_dst);
+	setByte(mmu, *reg_src_ptr, *reg_dst_ptr);
+	log_event(LOG_TRACE, LOG_CPU, "\t Loading %s value 0x%.2X into memory location pointed to by %s which is 0x%.4X", REG_NAMES[operands->reg_src], *reg_src_ptr, REG_NAMES[operands->reg_dst], *reg_dst_ptr);
+}
+
+// store nn register to u16 memory address
+void instr_STR_u16(Operands_t *operands) {
+	uint16_t address = operands->n16;
+	uint16_t *reg_src_ptr = reg16_id_ptr(operands->reg_src);
+	uint8_t lo = (uint8_t)*reg_src_ptr;
+	uint8_t hi = *reg_src_ptr >> 8;
+	setByte(mmu, lo, address);
+	setByte(mmu, hi, address+1);
+	log_event(LOG_TRACE, LOG_CPU, "\t Loading %s value 0x%.4X into memory location 0x%.4X and 0x%.4X", REG_NAMES[operands->reg_src], *reg_src_ptr, address, address+1);
+}
+
+// LOADS ====================================
+
+// load src register to dst
+void instr_LD_n(Operands_t *operands) {
+	uint8_t *reg_src_ptr = reg8_id_ptr(operands->reg_src);
+	uint8_t *reg_dst_ptr = reg8_id_ptr(operands->reg_dst);
+	*reg_dst_ptr = *reg_src_ptr;
+	log_event(LOG_TRACE, LOG_CPU, "\t Loaded 0x%.2X from %s to %s, now  0x%.2X", *reg_src_ptr, REG_NAMES[operands->reg_src], REG_NAMES[operands->reg_dst], *reg_dst_ptr);
+}
+
 // load memory location pointed to by src reg to dst reg
 void instr_LD_MEM(Operands_t *operands) {
 	uint16_t *reg_src_ptr = reg16_id_ptr(operands->reg_src);
@@ -167,11 +368,19 @@ void instr_LD_MEM(Operands_t *operands) {
 	log_event(LOG_TRACE, LOG_CPU, "\t Got 0x%.2X from memory pointed to by reg %s and put in reg %s", value, REG_NAMES[operands->reg_src], REG_NAMES[operands->reg_dst]);
 }
 
+void instr_LD_u8(Operands_t *operands) {
+	uint8_t *n_ptr = reg8_id_ptr(operands->reg_dst);
+	*n_ptr = operands->n8;
+	log_event(LOG_TRACE, LOG_CPU, "\t %s ->  0x%.2X", REG_NAMES[operands->reg_dst], *n_ptr);
+}
+
 void instr_LD_u16(Operands_t *operands) {
 	uint16_t *reg_dst_ptr = reg16_id_ptr(operands->reg_dst);
 	*reg_dst_ptr = operands->n16;
 	log_event(LOG_TRACE, LOG_CPU, "\t %s ->  0x%.4X", REG_NAMES[operands->reg_dst], *reg_dst_ptr);
 }
+
+// INC/DEC ===================================
 
 void instr_INC_n(Operands_t *operands) {
 	uint8_t *n_ptr = reg8_id_ptr(operands->reg_dst);
@@ -198,6 +407,27 @@ void instr_INC_nn(Operands_t *operands) {
 	uint16_t *nn_ptr = reg16_id_ptr(operands->reg_dst);
 	*nn_ptr += 1;
 	log_event(LOG_TRACE, LOG_CPU, "\t %s -> 0x%.4", REG_NAMES[operands->reg_dst], *nn_ptr);
+}
+
+void instr_DEC_nn(Operands_t *operands) {
+	uint16_t *nn_ptr = reg16_id_ptr(operands->reg_dst);
+	*nn_ptr -= 1;
+	log_event(LOG_TRACE, LOG_CPU, "\t %s -> 0x%.2X", REG_NAMES[operands->reg_dst], *nn_ptr);
+}
+
+// SHIFTS/ROTATES ================================
+
+void instr_RLCA(Operands_t *operands) {
+	// rotate A left old bit 7 becomes carry flag
+	uint8_t initial = regs.a;
+	uint8_t msb = regs.a >> 7; // get MSB
+	regs.a = regs.a << 1;
+	regs.a += msb;
+	SET_FLAG(ZERO, regs.a == 0);
+	SET_FLAG(SUBTRACT, 0);
+	SET_FLAG(HALF, 0);
+	SET_FLAG(CARRY, msb);
+	log_event(LOG_TRACE, LOG_CPU, "\t A: 0x%.2 -> 0x%.2", initial, regs.a);
 }
 
 // ADD:

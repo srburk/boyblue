@@ -52,14 +52,29 @@ int main() {
 	
 	uint8_t program[] = {
         0x00,       // NOP
-       	0x01, 0x43, 0x51, // load 0x5143 into BC (little endian)
+//        	0x01, 0x43, 0x51, // load 0x5143 into BC (little endian)
        	0x03,			  // inc BC
-       	0x02, 			  // load from BC into A
+       	0x0A, 			  // load from BC into A
+       	0x07,			  // RLCA
        	0x04,			  // increment B
        	0x05,			  // decrement B
+       	0x0B,
+       	0x09,			  // ADD BC to HL
        	0x11, 0x43, 0x51, // load 0x5143 into DE (little endian)
        	0x21, 0x43, 0x51, // load 0x5143 into HL (little endian)
+		0x04,			  // increment B
+       	0x70,				// put B into (HL)
        	0x31, 0x43, 0x51, // load 0x5143 into SP (little endian)
+       	0x08, 0x43, 0x51,	  // load SP to (0x5143)
+		0x06, 0x80,		  // load B with 0x80
+		0x0C,
+		0x41,				// load B with C
+		0x89,
+		0x89,
+		0x89,
+		0x89,
+		0x89,
+		0x89,
         0xD3, // custom stop code
     };
 

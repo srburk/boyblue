@@ -79,12 +79,33 @@ int execute(uint8_t opcode);
 
 void instr_NOP(Operands_t *operands);
 
+void instr_ADD_HL(Operands_t *operands);
+void instr_ADD_MEM(Operands_t *operands);
+void instr_ADD_n(Operands_t *operands);
+void instr_ADC_MEM(Operands_t *operands);
+void instr_ADC_n(Operands_t *operands);
+
+void instr_SUB_n(Operands_t *operands);
+void instr_SUB_MEM(Operands_t *operands);
+void instr_SBC_n(Operands_t *operands);
+void instr_SBC_MEM(Operands_t *operands);
+
 void instr_LD_MEM(Operands_t *operands);
+
+void instr_LD_n(Operands_t *operands);
+
+void instr_LD_u8(Operands_t *operands);
 void instr_LD_u16(Operands_t *operands);
+
+void instr_STR_n(Operands_t *operands);
+void instr_STR_u16(Operands_t *operands);
 
 void instr_INC_n(Operands_t *operands);
 void instr_DEC_n(Operands_t *operands);
 void instr_INC_nn(Operands_t *operands);
+void instr_DEC_nn(Operands_t *operands);
+
+void instr_RLCA(Operands_t *operands);
 
 // ==========================================
 
