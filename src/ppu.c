@@ -1,7 +1,7 @@
 
-// gpu.c
+// ppu.c
 
-#include "gpu.h"
+#include "ppu.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -22,7 +22,7 @@ MMU_t *mmu;
 
 static const uint32_t COLOR_PALETTE[4] = {0xFFFFFFFF, 0xFFAAAAAA, 0xFF555555, 0xFF000000};
 
-struct GPU_t{
+struct PPU_t{
 	
 	uint8_t vram[VRAM_SIZE];
 	MMU_t *mmu;
@@ -32,28 +32,28 @@ struct GPU_t{
 	
 };
 
-GPU_t *create_gpu(SDL_Renderer *renderer, MMU_t *mmu) {
-	GPU_t *gpu = malloc(sizeof(GPU_t));
-    if (!gpu) return NULL;
+PPU_t *create_ppu(SDL_Renderer *renderer, MMU_t *mmu) {
+	PPU_t *ppu = malloc(sizeof(PPU_t));
+    if (!ppu) return NULL;
     
-    gpu->renderer = renderer;
-    gpu->framebuffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
-    SDL_SetTextureScaleMode(gpu->framebuffer, SDL_SCALEMODE_NEAREST);
+    ppu->renderer = renderer;
+    ppu->framebuffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
+    SDL_SetTextureScaleMode(ppu->framebuffer, SDL_SCALEMODE_NEAREST);
     
 	if (!mmu) {
-		log_event(LOG_ERROR, LOG_GPU, "create_gpu() mmu pointer is NULL\n");
+		log_event(LOG_ERROR, LOG_PPU, "create_ppu() mmu pointer is NULL\n");
 		return NULL;
 	}
-	gpu->mmu = mmu;
-	gpu->cycleCount = 0;
-    return gpu;
+	ppu->mmu = mmu;
+	ppu->cycleCount = 0;
+    return ppu;
 }
 
-void step_gpu(GPU_t *gpu) {
-// 	gpu->cycleCount += 8;
+void step_ppu(PPU_t *ppu) {
+// 	ppu->cycleCount += 8;
 	// TODO: FIX TIMING, magic number for now
-// 	if (gpu->cycleCount >= 456) {
-// 		gpu->cycleCount = 0;
+// 	if (ppu->cycleCount >= 456) {
+// 		ppu->cycleCount = 0;
 // 		if (memory[FY_REG] < 153) { // keep in VBLANK MODE FOR NOW
 // // 			memory[FY_REG] = 0;
 // 			memory[FY_REG]++;
@@ -74,7 +74,7 @@ void step_gpu(GPU_t *gpu) {
 #define TILE_DATA_1_START 0x8000
 #define TILE_DATA_1_END 0x8FFF
 
-static void render_tile(GPU_t *gpu, uint16_t tile_addr, int x, int y, uint32_t *buf, int pitch) {
+static void render_tile(PPU_t *ppu, uint16_t tile_addr, int x, int y, uint32_t *buf, int pitch) {
 	for (int row = 0; row < 8; row++) {
 // 		uint8_t lo = r_tile[row*2];
 // 		uint8_t hi = r_tile[row*2 + 1];
@@ -95,7 +95,7 @@ static void render_tile(GPU_t *gpu, uint16_t tile_addr, int x, int y, uint32_t *
 	}
 }
 
-void render_frame(GPU_t *gpu) {
+void render_frame(PPU_t *ppu) {
 	// 1. select tile map
 	uint8_t LCDC = memory[LCD_CONTROL_ADDR];
 // 	printf("LCDC = %i (decimal) \n", LCDC);
@@ -111,7 +111,7 @@ void render_frame(GPU_t *gpu) {
 	void* pixels;
     int pitch;
     
-	SDL_LockTexture(gpu->framebuffer, NULL, &pixels, &pitch);
+	SDL_LockTexture(ppu->framebuffer, NULL, &pixels, &pitch);
 	uint32_t *buf = (uint32_t *)pixels;
 	
 	for (int map_y = 0; map_y < 18; map_y++) {
@@ -122,7 +122,7 @@ void render_frame(GPU_t *gpu) {
 			uint8_t tile_index = memory[addr_in_map]; // index into tile map
 			uint16_t tile_addr = tile_data_start + (tile_index * 16);
 // 			printf("%i (0x%.2X) ", tile_index, tile_addr);
-			render_tile(gpu, tile_addr, map_x, map_y, buf, pitch);
+			render_tile(ppu, tile_addr, map_x, map_y, buf, pitch);
 		// 	printf("Tile index: %i | Tile address: 0x%.4X:\n", tile_index, tile_addr);
 // 			printBinary(memory[tile_addr]);
 // 			printf(" ");
@@ -130,17 +130,16 @@ void render_frame(GPU_t *gpu) {
 // 			printf("\n");
 		}
 	}
-	printf("\n");
 	
-	SDL_UnlockTexture(gpu->framebuffer);
+	SDL_UnlockTexture(ppu->framebuffer);
 	SDL_FRect dst = {0, 0, WINDOW_WIDTH, WINDOW_HEIGHT};
-	SDL_RenderTexture(gpu->renderer, gpu->framebuffer, NULL, &dst);
+	SDL_RenderTexture(ppu->renderer, ppu->framebuffer, NULL, &dst);
 
 }
 
-// void write_vram(GPU_t* gpu, uint8_t n, uint16_t address) {
+// void write_vram(PPU_t* ppu, uint8_t n, uint16_t address) {
 
-// 	gpu->vram[address] = n;
+// 	ppu->vram[address] = n;
 // 
-// 	log_event(LOG_TRACE, LOG_GPU, "Writing 0x%02X to VRAM at 0x%04X", n, address);
+// 	log_event(LOG_TRACE, LOG_PPU, "Writing 0x%02X to VRAM at 0x%04X", n, address);
 // }

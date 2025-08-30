@@ -11,7 +11,7 @@ static const char* get_subsystem_label(LogSubsystem_t subsystem) {
     switch (subsystem) {
         case LOG_CPU:   	return "CPU";
         case LOG_MMU:   	return "MMU";
-        case LOG_GPU:   	return "GPU";
+        case LOG_PPU:   	return "PPU";
         case LOG_DECODER:	return "DEC";
         default:        	return "DEFAULT";
     }

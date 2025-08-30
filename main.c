@@ -3,7 +3,7 @@
 
 #include "src/cpu.h"
 #include "src/mmu.h"
-#include "src/gpu.h"
+#include "src/ppu.h"
 #include "src/constants.h"
 #include "src/log.h"
 
@@ -17,6 +17,8 @@ SDL_Renderer *renderer;
 SDL_Surface *surface;
 SDL_Texture *texture;
 SDL_Event event;
+
+int running;
 
 void setupSDL() {
 	if (!SDL_Init(SDL_INIT_VIDEO)) {
@@ -36,7 +38,7 @@ int main() {
 
 	setupSDL();
 	MMU_t *mmu = create_MMU();
-	GPU_t *gpu = create_gpu(renderer, mmu);
+	PPU_t *ppu = create_ppu(renderer, mmu);
 	
 	initCPU(mmu);
 	
@@ -47,12 +49,18 @@ int main() {
 // 	loadRomFile("cpu_instrs.gb");
 		
 // 	int cycles = 0;
-	uint8_t opcode = *getByte(regs.pc);
-	while (opcode != 0x00) {
+
+	running = 1;
+	
+	uint8_t opcode;
+	while (running) {
 		opcode = *getByte(regs.pc);
+		if (opcode == 0x0) {
+			running = 0;
+		}
 		execute(opcode);
 		regs.pc += 1;
-// 		step_gpu(gpu);
+// 		step_ppu(ppu);
 	}
 	
 	dumpMemoryToFile("final.bin", 0x0, 0xFFFF);
@@ -66,8 +74,8 @@ int main() {
         
         uint32_t currentTime = SDL_GetTicks();
 		if (currentTime - lastTime >= 16) {
-// 			render_tile(gpu);
-			render_frame(gpu);
+// 			render_tile(ppu);
+			render_frame(ppu);
         	SDL_RenderPresent(renderer);
 			lastTime = currentTime;
 		} else {

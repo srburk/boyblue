@@ -12,7 +12,7 @@ set(SOURCES
     src/cpu.c
     src/decoder.c
     src/mmu.c
-    src/gpu.c
+    src/ppu.c
     src/log.c
 )
 
