@@ -37,6 +37,7 @@ void log_event(LogLevel_t level, LogSubsystem_t subsystem, const char *fmt, ...)
 	switch (level) {
 		case LOG_TRACE:
 			fp = fopen("trace.log", "a"); 
+// 			fp = stdout;
 			break;
 		case LOG_INFO:
 			fp = fopen("info.log", "a");

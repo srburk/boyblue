@@ -24,9 +24,11 @@ typedef struct {
 	uint16_t sp, pc;
 } Registers_t;
 
-typedef enum {
-	AF, BC, DE, HL, SP
-} RegID;
+// typedef enum {
+// 	NONE, a, b, c, d, e, f, h, l, AF, BC, DE, HL, SP
+// } RegID_t;
+
+#include "decoder.h"
 
 typedef enum { // nz if zero = 0, z if zero = 1, nc if c = 0, c if c = 1
 	NZ = 0, Z = 1, NC = 2, C = 3
@@ -74,6 +76,17 @@ void initCPU(MMU_t *mmu);
 void printRegState();
 
 int execute(uint8_t opcode);
+
+void instr_NOP(Operands_t *operands);
+
+void instr_LD_MEM(Operands_t *operands);
+void instr_LD_u16(Operands_t *operands);
+
+void instr_INC_n(Operands_t *operands);
+void instr_DEC_n(Operands_t *operands);
+void instr_INC_nn(Operands_t *operands);
+
+// ==========================================
 
 // LOADS
 void STR(uint16_t address);

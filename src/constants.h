@@ -26,4 +26,23 @@
 #define TIMA				0xFF05
 #define FY_REG				0xFF44
 
+// TEMP =============================================
+typedef enum {
+    REG_A,
+    REG_B,
+    REG_C,
+    REG_D,
+    REG_E,
+    REG_H,
+    REG_L,
+    REG_F,
+    REG_AF,
+    REG_BC,
+    REG_DE,
+    REG_HL,
+    REG_SP,
+    REG_PC,
+	NONE,
+} RegID_t;
+
 #endif

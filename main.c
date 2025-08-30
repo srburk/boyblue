@@ -32,8 +32,8 @@ void setupSDL() {
 
 int main() {	
 
-// 	set_log_level(LOG_ERROR | LOG_TRACE | LOG_INFO);
-	set_log_level(LOG_ERROR | LOG_INFO);
+	set_log_level(LOG_ERROR | LOG_TRACE | LOG_INFO);
+// 	set_log_level(LOG_ERROR | LOG_INFO);
 // 	set_log_subsystems(LOG_CPU);
 
 	setupSDL();
@@ -42,52 +42,70 @@ int main() {
 	
 	initCPU(mmu);
 	
-	loadFileToMemory("../dmg_boot.bin", 0x0);
-	loadFileToMemory("../logo.bin", 0x0104);
-	dumpMemoryToFile("initial.bin", 0x0, 0xFFFF);
+// 	loadFileToMemory("../dmg_boot.bin", 0x0);
+// 	loadFileToMemory("../logo.bin", 0x0104);
+// 	dumpMemoryToFile("initial.bin", 0x0, 0xFFFF);
 	
 // 	loadRomFile("cpu_instrs.gb");
 		
 // 	int cycles = 0;
+	
+	uint8_t program[] = {
+        0x00,       // NOP
+       	0x01, 0x43, 0x51, // load 0x5143 into BC (little endian)
+       	0x03,			  // inc BC
+       	0x02, 			  // load from BC into A
+       	0x04,			  // increment B
+       	0x05,			  // decrement B
+       	0x11, 0x43, 0x51, // load 0x5143 into DE (little endian)
+       	0x21, 0x43, 0x51, // load 0x5143 into HL (little endian)
+       	0x31, 0x43, 0x51, // load 0x5143 into SP (little endian)
+        0xD3, // custom stop code
+    };
+
+	loadMemory(program, sizeof(program), 0x0000);
 
 	running = 1;
+	int cycles = 0;
 	
 	uint8_t opcode;
 	while (running) {
 		opcode = *getByte(regs.pc);
-		if (opcode == 0x0) {
+		if (opcode == 0xD3) { // custom stop code
 			running = 0;
+			break;
 		}
-		execute(opcode);
-		regs.pc += 1;
-// 		step_ppu(ppu);
+		cycles += execute(opcode);
 	}
 	
-	dumpMemoryToFile("final.bin", 0x0, 0xFFFF);
+	printRegState();
+	printf("Finsihed in %i cycles\n", cycles);
 	
-	uint32_t lastTime = SDL_GetTicks();
-	while (1) {
-        SDL_PollEvent(&event);
-        if (event.type == SDL_EVENT_QUIT) {
-            break;
-        }
-        
-        uint32_t currentTime = SDL_GetTicks();
-		if (currentTime - lastTime >= 16) {
-// 			render_tile(ppu);
-			render_frame(ppu);
-        	SDL_RenderPresent(renderer);
-			lastTime = currentTime;
-		} else {
-			SDL_Delay(1); 
-		}
-    }
-
-    SDL_DestroyTexture(texture);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-
-    SDL_Quit();
+// 	dumpMemoryToFile("final.bin", 0x0, 0xFFFF);
+	
+// 	uint32_t lastTime = SDL_GetTicks();
+// 	while (1) {
+//         SDL_PollEvent(&event);
+//         if (event.type == SDL_EVENT_QUIT) {
+//             break;
+//         }
+//         
+//         uint32_t currentTime = SDL_GetTicks();
+// 		if (currentTime - lastTime >= 16) {
+// // 			render_tile(ppu);
+// 			render_frame(ppu);
+//         	SDL_RenderPresent(renderer);
+// 			lastTime = currentTime;
+// 		} else {
+// 			SDL_Delay(1); 
+// 		}
+//     }
+// 
+//     SDL_DestroyTexture(texture);
+//     SDL_DestroyRenderer(renderer);
+//     SDL_DestroyWindow(window);
+// 
+//     SDL_Quit();
 	
 	return 0;
 }

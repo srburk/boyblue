@@ -2,23 +2,57 @@
 // cpu.c
 
 #include "cpu.h"
-#include "decoder.h"
 #include "log.h"
 
 #include <string.h>
 #include <stdio.h>
 
-// static uint16_t * reg_id_ptr(RegID reg_id) {
-// 	switch (reg_id) {
-// 		case AF: return &regs.af;
-// 		case BC: return &regs.bc;
-// 		case DE: return &regs.de;
-// 		case HL: return &regs.hl;
-// 		case SP: return &regs.sp;
-// 		default:
-// 			// big error
-// 	}
-// };
+static uint16_t *reg16_id_ptr(RegID_t reg_id) {
+	switch (reg_id) {
+		case REG_AF: return &regs.af;
+		case REG_BC: return &regs.bc;
+		case REG_DE: return &regs.de;
+		case REG_HL: return &regs.hl;
+		case REG_SP: return &regs.sp;
+		default:
+			// anything not a 16 bit register
+			log_event(LOG_ERROR, LOG_CPU, "Attempted to get 8 bit register ptr from 16 bit function");
+			return NULL;
+	}
+};
+
+static uint8_t *reg8_id_ptr(RegID_t reg_id) {
+	switch (reg_id) {
+		case REG_A: return &regs.a;
+		case REG_B: return &regs.b;
+		case REG_C: return &regs.c;
+		case REG_D: return &regs.d;
+		case REG_E: return &regs.e;
+		case REG_H: return &regs.h;
+		case REG_L: return &regs.l;
+		case REG_F: return &regs.f;
+		default: 
+			return NULL;
+	}
+}
+
+static const char *REG_NAMES[] = {
+    [REG_A]  = "A",
+    [REG_B]  = "B",
+    [REG_C]  = "C",
+    [REG_D]  = "D",
+    [REG_E]  = "E",
+    [REG_H]  = "H",
+    [REG_L]  = "L",
+    [REG_F]  = "F",
+    [REG_AF] = "AF",
+    [REG_BC] = "BC",
+    [REG_DE] = "DE",
+    [REG_HL] = "HL",
+    [REG_SP] = "SP",
+    [REG_PC] = "PC",
+    [NONE] = "NONE"
+};
 
 // Temp global MMU reference
 MMU_t *mmu;
@@ -93,15 +127,78 @@ void initCPU(MMU_t *mmup) {
 	mmu = mmup;
 }
 
-// opcode decoder
+// opcode decoder (returns cycle count)
 int execute(uint8_t opcode) {
-	captureState();
-	decode(opcode);
-// 	printRegState();
-	outputTrace();
+
+	Instruction_t *instruction = &core_instructions[opcode];
+
+	// construct operands
+	Operands_t operands;
+	operands.reg_src = instruction->reg_src;
+	operands.reg_dst = instruction->reg_dst;
+		
+	if (instruction->byte_length == 2) {
+		regs.pc++;
+		operands.n8 = memory[regs.pc];		
+	} else if (instruction->byte_length == 3) {
+		operands.n16 = memory[regs.pc + 1] | ((uint16_t)memory[regs.pc + 2] << 8);
+	}
+	
+	log_event(LOG_TRACE, LOG_CPU, "PC = 0x%.2X | %s", regs.pc, instruction->name);
+	
+	instruction->execute(&operands);
+	
+	regs.pc += instruction->byte_length;
+	return instruction->cycles;
 }
 
 // instruction primitives:
+
+void instr_NOP(Operands_t *operands) {
+	return;
+}
+
+// load memory location pointed to by src reg to dst reg
+void instr_LD_MEM(Operands_t *operands) {
+	uint16_t *reg_src_ptr = reg16_id_ptr(operands->reg_src);
+	uint8_t *reg_dst_ptr = reg8_id_ptr(operands->reg_dst);
+	uint8_t value = *getByte((uint16_t)*reg_src_ptr);
+	*reg_dst_ptr = value;
+	log_event(LOG_TRACE, LOG_CPU, "\t Got 0x%.2X from memory pointed to by reg %s and put in reg %s", value, REG_NAMES[operands->reg_src], REG_NAMES[operands->reg_dst]);
+}
+
+void instr_LD_u16(Operands_t *operands) {
+	uint16_t *reg_dst_ptr = reg16_id_ptr(operands->reg_dst);
+	*reg_dst_ptr = operands->n16;
+	log_event(LOG_TRACE, LOG_CPU, "\t %s ->  0x%.4X", REG_NAMES[operands->reg_dst], *reg_dst_ptr);
+}
+
+void instr_INC_n(Operands_t *operands) {
+	uint8_t *n_ptr = reg8_id_ptr(operands->reg_dst);
+	uint8_t initial = *n_ptr;
+	*n_ptr += 1;
+	SET_FLAG(ZERO, *n_ptr == 0);
+	SET_FLAG(SUBTRACT, 0);
+	SET_FLAG(HALF, (initial < 0x10 && *n_ptr >= 0x10)); // check for carry from bit 3
+	log_event(LOG_TRACE, LOG_CPU, "\t %s -> 0x%.2X", REG_NAMES[operands->reg_dst], *n_ptr);
+}
+
+void instr_DEC_n(Operands_t *operands) {
+	uint8_t *n_ptr = reg8_id_ptr(operands->reg_dst);
+	uint8_t initial = *n_ptr;
+	*n_ptr -= 1;
+	SET_FLAG(ZERO, *n_ptr == 0);
+	SET_FLAG(SUBTRACT, 1);
+	SET_FLAG(HALF, (initial & 0x0F) < (*n_ptr & 0x0F)); // check for borrow from bit 4
+	log_event(LOG_TRACE, LOG_CPU, "\t %s -> 0x%.2X", REG_NAMES[operands->reg_dst], *n_ptr);
+}
+
+// increment register nn (no flags effected)
+void instr_INC_nn(Operands_t *operands) {
+	uint16_t *nn_ptr = reg16_id_ptr(operands->reg_dst);
+	*nn_ptr += 1;
+	log_event(LOG_TRACE, LOG_CPU, "\t %s -> 0x%.4", REG_NAMES[operands->reg_dst], *nn_ptr);
+}
 
 // ADD:
 

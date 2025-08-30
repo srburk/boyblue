@@ -108,7 +108,8 @@ void setByte(MMU_t *mmu, uint8_t n, uint16_t address) {
 
     if (address <= 0x7FFF) {
         // ROM
-        log_event(LOG_ERROR, LOG_MMU, "Attempt to write 0x%02X to ROM at 0x%04X INGORED", n, address);
+        log_event(LOG_ERROR, LOG_MMU, "Attempt to write 0x%02X to ROM at 0x%04X", n, address);
+        memory[address] = n;
     } else if (address >= VRAM_START && address <= VRAM_END) {
         // VRAM
         log_event(LOG_INFO, LOG_MMU, "Wrote 0x%02X to VRAM", n);
