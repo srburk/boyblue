@@ -30,8 +30,8 @@ void setupSDL() {
 
 int main() {	
 
-	set_log_level(LOG_ERROR | LOG_TRACE | LOG_INFO);
-// 	set_log_level(LOG_ERROR | LOG_INFO);
+// 	set_log_level(LOG_ERROR | LOG_TRACE | LOG_INFO);
+	set_log_level(LOG_ERROR | LOG_INFO);
 // 	set_log_subsystems(LOG_CPU);
 
 	setupSDL();
@@ -57,28 +57,29 @@ int main() {
 	
 	dumpMemoryToFile("final.bin", 0x0, 0xFFFF);
 	
-	// uint32_t lastTime = SDL_GetTicks();
-// 	while (1) {
-//         SDL_PollEvent(&event);
-//         if (event.type == SDL_EVENT_QUIT) {
-//             break;
-//         }
-//         
-//         uint32_t currentTime = SDL_GetTicks();
-// 		if (currentTime - lastTime >= 16) {
+	uint32_t lastTime = SDL_GetTicks();
+	while (1) {
+        SDL_PollEvent(&event);
+        if (event.type == SDL_EVENT_QUIT) {
+            break;
+        }
+        
+        uint32_t currentTime = SDL_GetTicks();
+		if (currentTime - lastTime >= 16) {
 // 			render_tile(gpu);
-//         	SDL_RenderPresent(renderer);
-// 			lastTime = currentTime;
-// 		} else {
-// 			SDL_Delay(1); 
-// 		}
-//     }
-// 
-//     SDL_DestroyTexture(texture);
-//     SDL_DestroyRenderer(renderer);
-//     SDL_DestroyWindow(window);
-// 
-//     SDL_Quit();
+			render_frame(gpu);
+        	SDL_RenderPresent(renderer);
+			lastTime = currentTime;
+		} else {
+			SDL_Delay(1); 
+		}
+    }
+
+    SDL_DestroyTexture(texture);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+
+    SDL_Quit();
 	
 	return 0;
 }

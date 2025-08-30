@@ -11,7 +11,7 @@ typedef struct MMU_t MMU_t;
 
 MMU_t *create_MMU();
 
-static uint8_t memory[0xFFFF];
+uint8_t memory[0xFFFF];
 
 void loadMemory(uint8_t *ptr, uint16_t count, uint16_t start);
 void loadFileToMemory(const char *filename, uint16_t start);

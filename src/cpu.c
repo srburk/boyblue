@@ -378,23 +378,23 @@ void RLC(uint8_t* n) {
 	SHIFT_updateFlags(n);
 }
 
-// void RLCA() {
-// 	// rotate A left old bit 7 becomes carry flag 
-// 	uint8_t msb = regs.a >> 7; // get MSB
-// 	regs.a = regs.a << 1;
-// 	regs.a += msb;
-// 	SET_FLAG(CARRY, msb);
-// 	SHIFT_updateFlags(&regs.a);
-// }
+void RLCA() {
+	// rotate A left old bit 7 becomes carry flag 
+	uint8_t msb = regs.a >> 7; // get MSB
+	regs.a = regs.a << 1;
+	regs.a += msb;
+	SET_FLAG(CARRY, msb);
+	SHIFT_updateFlags(&regs.a);
+}
 
-// void RLA() {
-// 	// rotate A left through carry flag
-// 	uint8_t msb = regs.a >> 7; // get MSB
-// 	regs.a = regs.a << 1;
-// 	regs.a += GET_FLAG(CARRY);
-// 	SET_FLAG(CARRY, msb);
-// 	SHIFT_updateFlags(&regs.a);
-// }
+void RLA() {
+	// rotate A left through carry flag
+	uint8_t msb = regs.a >> 7; // get MSB
+	regs.a = regs.a << 1;
+	regs.a += GET_FLAG(CARRY);
+	SET_FLAG(CARRY, msb);
+	SHIFT_updateFlags(&regs.a);
+}
 
 void RRCA() {
 	// rotate A right old bit 0 becomes carry flag 
@@ -404,6 +404,7 @@ void RRCA() {
 	SET_FLAG(CARRY, lsb);
 	SHIFT_updateFlags(&regs.a);
 }
+
 void RRA() {
 	// rotate A right through carry flag
 	uint8_t lsb = regs.a & 0x01; // get LSB

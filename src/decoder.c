@@ -374,7 +374,7 @@ int decode(uint8_t opcode) {
 					case 0x4: INC(&regs.b); break;
 					case 0x5: DEC(&regs.b); break;
 					case 0x6: immediate8 = getNextOperand(); LD(&regs.b, &immediate8); break;
-					case 0x7: RLC(&regs.a); break;
+					case 0x7: RLCA(); break;
 					case 0x8: regs.sp = getNextLargeOperand(); break;
 					case 0x9: ADD_HL(regs.bc); break;
 					case 0xA: LD(&regs.a, getByte(regs.bc)); break;
@@ -394,7 +394,7 @@ int decode(uint8_t opcode) {
 					case 0x4: INC(&regs.d); break;
 					case 0x5: DEC(&regs.d); break;
 					case 0x6: immediate8 = getNextOperand(); LD(&regs.d, &immediate8); break;
-					case 0x7: RLC(&regs.a); break;
+					case 0x7: RLA(); break;
 					case 0x8: JR(getNextOperand()); break;
 					case 0x9: ADD_HL(regs.de); break;
 					case 0xA: LD(&regs.a, getByte(regs.de)); break;
@@ -533,7 +533,7 @@ int decode(uint8_t opcode) {
 					case 0x3: ADD(&regs.e); break;
 					case 0x4: ADD(&regs.h); break;
 					case 0x5: ADD(&regs.l); break;
-					case 0x6: log_event(LOG_TRACE, LOG_DECODER, "Adding from HL (0x%.2X) location (0x%.2X) to A (intitial = 0x%.2X)", regs.hl, *getByte(regs.hl), regs.a); ADD(getByte(regs.hl)); log_event(LOG_TRACE, LOG_DECODER, "After of A = 0x%.2X)", regs.a); break;
+					case 0x6: ADD(getByte(regs.hl)); break;
 					case 0x7: ADD(&regs.a); break;
 					case 0x8: ADC(&regs.b); break;
 					case 0x9: ADC(&regs.c); break;

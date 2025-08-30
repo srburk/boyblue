@@ -122,7 +122,8 @@ void JR_CC(CC cc, int8_t n);
 
 // rotates and shifts
 void RLC(uint8_t* n);
-// void RLA();
+void RLA();
+void RLCA();
 void RRCA();
 void RRA();
 void SLA(uint8_t* n);
